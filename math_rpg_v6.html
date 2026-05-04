@@ -1,0 +1,3445 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+  .game-title{font-family:'Cinzel Decorative',serif!important;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --gold:#c9a84c;--gold-light:#f0d080;--gold-dark:#7a5f1e;
+    --stone:#1a1510;--stone2:#251e15;--stone3:#302820;--stone4:#3d3322;
+    --parchment:#f5e6c8;--parchment2:#e8d4a8;--parchment3:#d4b87a;
+    --blood:#8b1a1a;--blood2:#c0392b;
+    --ice:#4a9bbe;--poison:#4a7c2f;--fire:#c0680a;
+    --hp-green:#2e7d32;--hp-red:#c62828;
+    --shadow:rgba(0,0,0,0.8);
+  }
+  body{background:var(--stone);color:var(--parchment);font-family:'Crimson Text',serif;font-size:16px;min-height:100vh;overflow-x:hidden;background-image:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(0,0,0,0.05) 40px,rgba(0,0,0,0.05) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(0,0,0,0.05) 40px,rgba(0,0,0,0.05) 41px);}
+  h1,h2,h3{font-family:'Cinzel',serif;color:var(--gold)}
+  .screen{display:none;min-height:100vh;padding:20px}
+  .screen.active{display:block}
+  .panel{background:var(--stone2);border:2px solid var(--gold-dark);border-radius:4px;padding:16px;margin:10px 0}
+  .panel-title{font-family:'Cinzel',serif;color:var(--gold);font-size:13px;text-transform:uppercase;letter-spacing:2px;border-bottom:1px solid var(--gold-dark);padding-bottom:8px;margin-bottom:12px}
+  .btn{background:linear-gradient(180deg,var(--stone3),var(--stone));border:1px solid var(--gold-dark);color:var(--gold-light);font-family:'Cinzel',serif;font-size:12px;padding:10px 18px;cursor:pointer;border-radius:2px;transition:all .2s;letter-spacing:1px;text-transform:uppercase}
+  .btn:hover{background:linear-gradient(180deg,var(--stone4),var(--stone2));border-color:var(--gold);color:var(--gold-light);transform:translateY(-1px)}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+  .btn-primary{background:linear-gradient(180deg,var(--gold-dark),#5a4010);border-color:var(--gold);color:var(--gold-light)}
+  .btn-primary:hover{background:linear-gradient(180deg,var(--gold),var(--gold-dark))}
+  .btn-danger{border-color:var(--blood2);color:#ff8a8a}
+  .btn-danger:hover{background:var(--blood)}
+  .hp-bar-wrap{background:#111;border:1px solid #333;border-radius:2px;height:14px;overflow:hidden;margin:4px 0}
+  .hp-bar{height:100%;transition:width .5s;background:linear-gradient(90deg,var(--hp-red),var(--hp-green))}
+  .gold-text{color:var(--gold)}
+  .muted{color:var(--parchment3);font-size:14px}
+  .tag{display:inline-block;padding:2px 8px;border-radius:2px;font-size:11px;font-family:'Cinzel',serif;letter-spacing:1px;text-transform:uppercase}
+  .tag-warrior{background:#3d1a00;color:#ff9944;border:1px solid #7a3b00}
+  .tag-priest{background:#1a1a3d;color:#aaaaff;border:1px solid #3b3b7a}
+  .tag-mage{background:#3d001a;color:#ff44aa;border:1px solid #7a004a}
+  .tag-knight{background:#3d2800;color:#ffcc44;border:1px solid #7a5500}
+  .tag-druid{background:#003d00;color:#44ff88;border:1px solid #007a33}
+  .tag-wizard{background:#1a003d;color:#cc88ff;border:1px solid #4a007a}
+  .status-icon{display:inline-block;font-size:12px;padding:1px 6px;border-radius:10px;margin:1px}
+  .burn{background:#6b2900;color:#ff8800}
+  .poison-s{background:#1a3d00;color:#88ff44}
+  .bleed{background:#5a0000;color:#ff4444}
+  .cooldown-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;color:var(--gold-dark);font-family:'Cinzel',serif;font-size:11px;pointer-events:none;border-radius:2px}
+  .move-btn-wrap{position:relative}
+  .divider{border:none;border-top:1px solid var(--gold-dark);margin:12px 0;opacity:0.5}
+  .mcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;max-width:320px;margin-left:auto;margin-right:auto;}
+  .mcq-btn{background:linear-gradient(160deg,var(--stone3),var(--stone2));border:2px solid var(--gold-dark);color:var(--parchment);font-family:'Cinzel',serif;font-size:18px;padding:14px 10px;cursor:pointer;border-radius:4px;transition:all .15s;letter-spacing:1px;width:100%;}
+  .mcq-btn:hover{background:linear-gradient(160deg,var(--stone4),var(--stone3));border-color:var(--gold);color:var(--gold-light);transform:translateY(-2px);box-shadow:0 4px 14px rgba(201,168,76,0.2);}
+  .mcq-btn.correct{background:linear-gradient(160deg,#1a4d1a,#0e2e0e);border-color:#44ff88;color:#88ffaa;animation:cfx .4s ease;}
+  .mcq-btn.wrong{background:linear-gradient(160deg,#4d1a1a,#2e0e0e);border-color:#ff4444;color:#ff8888;animation:wfx .4s ease;}
+
+  .log-entry{padding:3px 0;font-size:14px;border-bottom:1px solid rgba(255,255,255,0.05)}
+  .log-entry.damage{color:#ff8888}
+  .log-entry.heal{color:#88ff88}
+  .log-entry.buff{color:#88ccff}
+  .log-entry.info{color:var(--parchment3)}
+  .log-entry.enemy{color:#ffaa44}
+  .log-entry.death{color:var(--gold);font-family:'Cinzel',serif}
+  .combat-log{max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.3);padding:8px;border-radius:2px}
+  .class-card{border:2px solid var(--gold-dark);border-radius:4px;padding:20px;cursor:pointer;transition:all .2s;background:var(--stone2)}
+  .class-card:hover{border-color:var(--gold);background:var(--stone3);transform:translateY(-2px)}
+  .class-card.selected{border-color:var(--gold);background:var(--stone3)}
+  .stat-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:14px}
+  .math-box{background:var(--stone3);border:2px solid var(--gold);border-radius:4px;padding:20px;text-align:center;margin:10px 0}
+  .question-display{font-size:18px;font-family:'Cinzel',serif;color:var(--gold-light);margin:10px 0;line-height:1.4}
+  .progress-dots{display:flex;gap:8px;justify-content:center;margin:10px 0}
+  .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--gold-dark);background:transparent;transition:background .3s}
+  .dot.filled{background:var(--gold)}
+  .dot.correct{background:#2e7d32}
+  .dot.wrong{background:var(--blood2)}
+  .event-card{border:1px solid var(--gold-dark);padding:16px;border-radius:4px;cursor:pointer;transition:all .2s;background:var(--stone2);margin:8px 0}
+  .event-card:hover{border-color:var(--gold);background:var(--stone3)}
+  .mob-card{background:var(--stone3);border:2px solid #444;border-radius:4px;padding:12px;flex:1;min-width:0;transition:border .2s,transform .15s}
+  .mob-card.selected-target{border-color:var(--gold)!important}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .flex-row{display:flex;gap:10px;align-items:center}
+  .weapon-name{color:var(--gold);font-family:'Cinzel',serif;font-size:13px}
+  .item-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.07)}
+  #title-screen{text-align:center;background:var(--stone);padding:40px 20px}
+  #title-screen h1{font-size:42px;text-shadow:0 0 20px rgba(201,168,76,0.5);margin-bottom:8px}
+  .subtitle{color:var(--parchment3);font-size:18px;font-family:'Crimson Text',italic,serif;margin-bottom:40px}
+  .top-bar{background:var(--stone2);border-bottom:2px solid var(--gold-dark);padding:10px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .badge{display:inline-block;padding:2px 10px;border:1px solid var(--gold-dark);border-radius:2px;font-size:12px;font-family:'Cinzel',serif;color:var(--gold)}
+  .stage-badge{background:var(--gold-dark);color:var(--stone);font-weight:600}
+  .class-upgrade-banner{background:linear-gradient(90deg,var(--stone3),var(--stone2),var(--stone3));border:1px solid var(--gold);padding:12px;border-radius:4px;text-align:center;margin:10px 0}
+  .shop-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--gold-dark);border-radius:4px;margin:6px 0;background:var(--stone3)}
+  .crafting-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid #333;border-radius:4px;margin:6px 0;background:var(--stone3)}
+  .victory-screen{text-align:center;background:radial-gradient(circle at center,#2a1a00,var(--stone));min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px}
+  .defeat-screen{text-align:center;background:radial-gradient(circle at center,#1a0000,var(--stone));min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px}
+  .stat-alloc{display:flex;align-items:center;gap:10px;padding:6px 0}
+  .stat-alloc span{min-width:80px;font-size:14px}
+  .stat-alloc .val{min-width:30px;text-align:center;font-family:'Cinzel',serif;color:var(--gold)}
+  .inventory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+  .inv-item{background:var(--stone3);border:1px solid #444;border-radius:4px;padding:8px;text-align:center;font-size:12px}
+  .inv-item.usable{border-color:var(--gold-dark);cursor:pointer}
+  .inv-item.usable:hover{border-color:var(--gold)}
+  .correct-flash{animation:cfx .4s ease}
+  .wrong-flash{animation:wfx .4s ease}
+  @keyframes cfx{0%{background:rgba(46,125,50,0.4)}100%{background:transparent}}
+  @keyframes wfx{0%{background:rgba(198,40,40,0.4)}100%{background:transparent}}
+  .mini-hp{font-size:12px;color:var(--parchment3)}
+  .encounter-title{font-family:'Cinzel',serif;font-size:20px;color:var(--gold);text-align:center;margin:10px 0}
+  .phase-label{font-size:11px;font-family:'Cinzel',serif;letter-spacing:2px;color:var(--parchment3);text-transform:uppercase;text-align:center;margin:4px 0}
+  .bear-indicator{background:#1a3d00;border:1px solid #4a7c2f;border-radius:4px;padding:8px;font-size:13px;margin:4px 0}
+  /* Turn indicator */
+  .turn-indicator{text-align:center;font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;padding:6px 14px;border-radius:4px;display:inline-block;margin:6px auto}
+  .turn-player{background:rgba(46,125,50,0.25);border:1px solid #2e7d32;color:#88ff88}
+  .turn-enemy{background:rgba(198,40,40,0.25);border:1px solid var(--blood2);color:#ff8888}
+  /* ===== ATTACK ANIMATIONS ===== */
+  @keyframes playerLunge{0%{transform:translateX(0) scale(1)}25%{transform:translateX(18px) scale(1.08)}55%{transform:translateX(-6px) scale(0.97)}100%{transform:translateX(0) scale(1)}}
+  @keyframes enemyLunge{0%{transform:translateX(0) scale(1)}25%{transform:translateX(-18px) scale(1.08)}55%{transform:translateX(6px) scale(0.97)}100%{transform:translateX(0) scale(1)}}
+  @keyframes hitFlashRed{0%,20%{background:rgba(255,60,60,0.55);box-shadow:0 0 18px rgba(255,60,60,0.6);}100%{background:transparent;box-shadow:none;}}
+  @keyframes hitFlashGreen{0%,20%{background:rgba(60,255,120,0.35);box-shadow:0 0 16px rgba(60,255,120,0.5);}100%{background:transparent;box-shadow:none;}}
+  @keyframes hitFlashBlue{0%,20%{background:rgba(80,160,255,0.4);box-shadow:0 0 16px rgba(80,160,255,0.5);}100%{background:transparent;box-shadow:none;}}
+  @keyframes cardShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-7px)}35%{transform:translateX(7px)}55%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  @keyframes iconBounce{0%,100%{transform:scale(1)}30%{transform:scale(1.3)}60%{transform:scale(0.9)}}
+  @keyframes screenFlash{0%{opacity:0.18}100%{opacity:0}}
+  @keyframes floatDmg{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
+  @keyframes healPulse{0%{box-shadow:0 0 0 0 rgba(88,255,88,0.6)}100%{box-shadow:0 0 0 14px rgba(88,255,88,0)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+  /* Particle system */
+  .vfx-particle{position:absolute;pointer-events:none;z-index:200;font-size:22px;animation:vfx-float 0.85s ease-out forwards;}
+  @keyframes vfx-float{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.3);}}
+  .vfx-particle.small{font-size:16px;}
+  .vfx-particle.large{font-size:30px;}
+
+  /* Lightning bolt SVG overlay */
+  .vfx-lightning{position:absolute;pointer-events:none;z-index:201;top:0;left:0;width:100%;height:100%;animation:vfx-lightning-fade 0.7s ease-out forwards;}
+  @keyframes vfx-lightning-fade{0%{opacity:1}60%{opacity:0.8}100%{opacity:0}}
+
+  /* Slash streak */
+  .vfx-slash{position:absolute;pointer-events:none;z-index:201;width:3px;border-radius:2px;transform-origin:top center;animation:vfx-slash-anim 0.35s ease-out forwards;}
+  @keyframes vfx-slash-anim{0%{opacity:1;transform:scaleY(0) rotate(var(--angle));}40%{opacity:1;transform:scaleY(1) rotate(var(--angle));}100%{opacity:0;transform:scaleY(1.1) rotate(var(--angle));}}
+
+  /* Fire/flame overlay */
+  .vfx-fire{position:absolute;pointer-events:none;z-index:201;font-size:28px;animation:vfx-fire-rise 0.7s ease-out forwards;}
+  @keyframes vfx-fire-rise{0%{opacity:1;transform:translateY(0) scale(0.7);}50%{opacity:1;transform:translateY(-18px) scale(1.2);}100%{opacity:0;transform:translateY(-40px) scale(0.5);}}
+
+  /* Holy light burst */
+  .vfx-holy{position:absolute;pointer-events:none;z-index:201;border-radius:50%;animation:vfx-holy-burst 0.6s ease-out forwards;}
+  @keyframes vfx-holy-burst{0%{opacity:0.9;transform:scale(0.2);}60%{opacity:0.5;transform:scale(1.4);}100%{opacity:0;transform:scale(1.8);}}
+
+  /* Bleed drip */
+  .vfx-bleed{position:absolute;pointer-events:none;z-index:201;font-size:18px;animation:vfx-drip 0.6s ease-in forwards;}
+  @keyframes vfx-drip{0%{opacity:1;transform:translateY(0);}100%{opacity:0.3;transform:translateY(28px);}}
+
+  /* Poison cloud */
+  .vfx-poison{position:absolute;pointer-events:none;z-index:201;font-size:24px;animation:vfx-cloud 0.9s ease-out forwards;}
+  @keyframes vfx-cloud{0%{opacity:0;transform:scale(0.3);}30%{opacity:1;transform:scale(1.1);}100%{opacity:0;transform:scale(1.6) translateY(-20px);}}
+
+  /* Nature vine */
+  .vfx-vine{position:absolute;pointer-events:none;z-index:201;font-size:22px;animation:vfx-vine-grow 0.7s ease-out forwards;}
+  @keyframes vfx-vine-grow{0%{opacity:0;transform:scale(0) rotate(-20deg);}40%{opacity:1;transform:scale(1.3) rotate(5deg);}100%{opacity:0;transform:scale(1) rotate(0deg) translateY(-15px);}}
+
+  /* Mana wave */
+  .vfx-mana{position:absolute;pointer-events:none;z-index:201;border-radius:50%;border:3px solid #cc88ff;animation:vfx-mana-ring 0.6s ease-out forwards;}
+  @keyframes vfx-mana-ring{0%{opacity:1;transform:scale(0.1);width:20px;height:20px;}100%{opacity:0;transform:scale(1);width:80px;height:80px;margin:-40px;}}
+
+  /* Enrage glow */
+  .vfx-enrage{position:absolute;pointer-events:none;z-index:201;inset:0;border-radius:6px;background:radial-gradient(circle,rgba(255,60,0,0.5),transparent 70%);animation:vfx-enrage-pulse 0.5s ease-out forwards;}
+  @keyframes vfx-enrage-pulse{0%{opacity:1;transform:scale(0.8);}100%{opacity:0;transform:scale(1.3);}}
+
+  /* Wave clear overlay */
+  #wave-clear-overlay{
+    position:fixed;inset:0;z-index:5000;display:none;
+    background:radial-gradient(ellipse at center,rgba(10,18,6,0.97) 0%,rgba(5,8,3,0.99) 100%);
+    align-items:center;justify-content:center;flex-direction:column;
+    animation:wco-in 0.35s ease;
+  }
+  #wave-clear-overlay.show{display:flex;}
+  @keyframes wco-in{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
+  .wco-title{font-family:'Cinzel Decorative',serif;font-size:40px;color:var(--gold-light);
+    text-shadow:0 0 30px rgba(201,168,76,0.7),0 0 60px rgba(201,168,76,0.3);
+    letter-spacing:3px;margin:12px 0 4px;animation:wco-pop .5s .1s both cubic-bezier(.18,.89,.32,1.28);}
+  @keyframes wco-pop{from{opacity:0;transform:translateY(18px) scale(0.9)}to{opacity:1;transform:none}}
+  .wco-sub{font-family:'Cinzel',serif;font-size:15px;color:var(--parchment3);letter-spacing:2px;margin-bottom:18px;}
+  .wco-loot{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:420px;margin:8px 0 18px;}
+  .wco-loot-tag{background:var(--stone3);border:1px solid var(--gold-dark);border-radius:3px;padding:4px 12px;
+    font-family:'Cinzel',serif;font-size:12px;color:var(--gold);animation:wco-pop .4s both;}
+  .wco-btn{font-size:15px;padding:12px 36px;margin-top:6px;}
+
+  /* How To Play screen */
+  .htp-section{margin-bottom:18px;}
+  .htp-section-title{font-family:'Cinzel',serif;font-size:13px;color:var(--gold);text-transform:uppercase;
+    letter-spacing:2px;border-bottom:1px solid var(--gold-dark);padding-bottom:6px;margin-bottom:10px;}
+  .htp-row{display:flex;gap:8px;margin:6px 0;font-size:14px;line-height:1.6;color:var(--parchment2);}
+  .htp-icon{font-size:20px;min-width:28px;text-align:center;line-height:1.5;}
+  .htp-class-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0;}
+  .htp-class-card{background:var(--stone3);border:1px solid var(--gold-dark);border-radius:4px;padding:10px;text-align:center;}
+  .htp-class-card .icon{font-size:26px;display:block;margin-bottom:4px;}
+  .htp-class-card .name{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);display:block;margin-bottom:4px;}
+  .htp-class-card .desc{font-size:11px;color:var(--parchment3);line-height:1.4;}
+  .htp-tip{background:rgba(201,168,76,0.06);border-left:3px solid var(--gold-dark);padding:8px 12px;
+    border-radius:0 4px 4px 0;font-size:13px;color:var(--parchment3);margin:6px 0;line-height:1.5;}
+
+  .anim-hit{animation:hitFlashRed 0.55s ease,cardShake 0.4s ease}
+  .anim-hit-player{animation:hitFlashRed 0.55s ease,cardShake 0.4s ease}
+  .anim-enemy-attack{animation:enemyLunge 0.4s ease}
+  .anim-heal{animation:hitFlashGreen 0.6s ease}
+  .anim-buff{animation:hitFlashBlue 0.6s ease}
+  .anim-icon-bounce{animation:iconBounce 0.35s ease}
+  #screen-flash{position:fixed;inset:0;pointer-events:none;z-index:9999;background:rgba(255,60,60,0.12);opacity:0;animation:none;border-radius:0;}
+  #screen-flash.flash-red{animation:screenFlash 0.4s ease forwards;}
+  #screen-flash.flash-green{background:rgba(60,255,80,0.1);animation:screenFlash 0.4s ease forwards;}
+
+  .float-dmg{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-family:'Cinzel',serif;font-weight:700;font-size:18px;pointer-events:none;animation:floatDmg 1s ease forwards;z-index:99}
+  .float-dmg.heal-num{color:#88ff88}
+  .float-dmg.dmg-num{color:#ff6666}
+  .float-dmg.status-num{color:#ffaa44}
+  .float-dmg{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-family:'Cinzel',serif;font-weight:700;font-size:18px;pointer-events:none;animation:floatDmg 1s ease forwards;z-index:99}
+  .float-dmg.heal-num{color:#88ff88}
+  .float-dmg.dmg-num{color:#ff6666}
+  .float-dmg.status-num{color:#ffaa44}
+  /* Phase banner */
+  .phase-banner{text-align:center;padding:8px;margin:6px 0;border-radius:4px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:2px;text-transform:uppercase}
+  .phase-banner.player-phase{background:rgba(46,125,50,0.2);border:1px solid #2e7d32;color:#88ff88}
+  .phase-banner.enemy-phase{background:rgba(198,40,40,0.2);border:1px solid var(--blood2);color:#ff9988}
+  .phase-banner.status-phase{background:rgba(180,130,0,0.2);border:1px solid var(--gold-dark);color:var(--gold)}
+  /* Boss arena */
+  .boss-arena{background:radial-gradient(ellipse at center,#2a0808 0%,#1a0f06 100%);border:2px solid var(--gold);border-radius:8px;padding:20px;text-align:center;margin:10px 0;position:relative;overflow:hidden}
+  .boss-arena::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(201,168,76,0.03) 10px,rgba(201,168,76,0.03) 11px);pointer-events:none}
+
+  /* ===== REDESIGNED COMBAT SCREEN ===== */
+  .combat-arena{
+    background:radial-gradient(ellipse at 50% 30%, #1a1008 0%, #0d0a05 60%, #050302 100%);
+    border:1px solid rgba(201,168,76,0.2);
+    border-radius:6px;
+    padding:16px;
+    margin:8px 0;
+    position:relative;
+    min-height:180px;
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+    gap:16px;
+  }
+  .combat-arena::before{
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(201,168,76,0.015) 60px,rgba(201,168,76,0.015) 61px),
+              repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(201,168,76,0.015) 40px,rgba(201,168,76,0.015) 41px);
+    pointer-events:none;border-radius:6px;
+  }
+  .combatant-card{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    background:rgba(0,0,0,0.4);
+    border:1px solid rgba(201,168,76,0.15);
+    border-radius:6px;
+    padding:12px 16px;
+    min-width:120px;
+    max-width:180px;
+    flex:1;
+    position:relative;
+  }
+  .combatant-card.player-card{border-color:rgba(46,125,50,0.4);}
+  .combatant-card.enemy-card{border-color:rgba(180,30,30,0.35);cursor:pointer;transition:border-color .2s,transform .15s;}
+  .combatant-card.enemy-card:hover{border-color:rgba(201,168,76,0.5);transform:translateY(-2px);}
+  .combatant-card.enemy-card.selected-target{border-color:var(--gold)!important;box-shadow:0 0 12px rgba(201,168,76,0.25);}
+  .combatant-icon{font-size:48px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.8));}
+  .combatant-name{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);letter-spacing:1px;text-align:center;}
+  .combatant-hp-text{font-size:11px;color:var(--parchment3);text-align:center;}
+  .combatant-hp-bar{width:100%;height:6px;background:#111;border-radius:3px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);}
+  .combatant-hp-fill{height:100%;transition:width .5s,background .5s;border-radius:3px;}
+  .vs-divider{font-family:'Cinzel',serif;font-size:18px;color:rgba(201,168,76,0.4);letter-spacing:3px;flex-shrink:0;}
+  .mobs-group{display:flex;flex-direction:column;gap:8px;flex:1;max-width:280px;}
+
+  /* Status effects on combatants */
+  .combatant-statuses{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;margin-top:2px;}
+
+  /* Moves panel redesign */
+  .moves-panel{
+    background:rgba(10,8,4,0.85);
+    border:1px solid rgba(201,168,76,0.2);
+    border-radius:6px;
+    padding:12px;
+  }
+  .moves-panel-title{
+    font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;
+    color:var(--parchment3);text-transform:uppercase;
+    border-bottom:1px solid rgba(201,168,76,0.15);
+    padding-bottom:6px;margin-bottom:10px;
+  }
+  .moves-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .move-btn-new{
+    position:relative;
+    background:linear-gradient(160deg,#1c1408,#0d0a04);
+    border:1px solid rgba(201,168,76,0.2);
+    border-radius:6px;
+    padding:16px 14px;
+    cursor:pointer;
+    text-align:left;
+    transition:all .15s;
+    font-family:inherit;
+    color:var(--parchment);
+    overflow:hidden;
+    min-height:90px;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:5px;
+  }
+  .move-btn-new:hover:not(:disabled){border-color:var(--gold);background:linear-gradient(160deg,#2a1e0c,#181006);transform:translateY(-1px);}
+  .move-btn-new.selected-move{border-color:var(--gold);background:linear-gradient(160deg,#382808,#1e1506);box-shadow:0 0 12px rgba(201,168,76,0.2);}
+  .move-btn-new:disabled{opacity:0.35;cursor:not-allowed;}
+  .move-btn-name{font-family:'Cinzel',serif;font-size:14px;color:var(--gold-light);display:block;line-height:1.2;}
+  .move-btn-desc{font-size:11px;color:var(--parchment3);display:block;line-height:1.45;}
+  .move-btn-cd{position:absolute;inset:0;background:rgba(0,0,0,0.68);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:13px;color:var(--gold-dark);border-radius:6px;gap:6px;}
+  .move-type-badge{display:inline-block;font-size:9px;padding:1px 5px;border-radius:2px;margin-left:4px;vertical-align:middle;font-family:'Cinzel',serif;letter-spacing:.5px;}
+  .type-atk{background:#3a0d0d;color:#ff9999;border:1px solid #7a2020;}
+  .type-heal{background:#0d3a1a;color:#88ffaa;border:1px solid #1a7a3a;}
+  .type-buff{background:#0d1a3a;color:#99aaff;border:1px solid #2040aa;}
+  .type-debuff{background:#1a0d3a;color:#cc88ff;border:1px solid #5020aa;}
+
+  /* Phase banner redesign */
+  .phase-banner-new{
+    text-align:center;padding:5px 0;margin:6px 0;
+    font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+    border-top:1px solid transparent;border-bottom:1px solid transparent;
+  }
+  .phase-banner-new.player-phase{border-color:rgba(46,125,50,0.3);color:#6dda80;}
+  .phase-banner-new.enemy-phase{border-color:rgba(198,40,40,0.3);color:#ff8888;}
+
+  /* Combat log redesign */
+  .combat-log-panel{
+    background:rgba(5,4,2,0.9);
+    border:1px solid rgba(201,168,76,0.12);
+    border-radius:6px;
+    padding:8px 10px;
+  }
+  .combat-log-title{font-family:'Cinzel',serif;font-size:9px;color:var(--parchment3);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.06);}
+
+  /* ===== REDESIGNED CRAFTING GRID ===== */
+  .craft-screen-header{
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:14px;
+  }
+  .craft-screen-title{font-family:'Cinzel',serif;font-size:18px;color:var(--parchment);letter-spacing:2px;}
+  .craft-materials-line{font-size:13px;color:var(--parchment3);}
+  .craft-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .craft-card{
+    background:linear-gradient(160deg,#1c1408,#0e0c06);
+    border:1px solid #3a3020;
+    border-radius:4px;
+    padding:14px 10px;
+    text-align:center;
+    cursor:pointer;
+    transition:all .15s;
+    position:relative;
+    min-height:130px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  }
+  .craft-card:hover:not(.craft-card-owned):not(.craft-card-disabled){border-color:rgba(201,168,76,0.5);background:linear-gradient(160deg,#25190a,#141009);}
+  .craft-card.craft-card-owned{border-color:rgba(201,168,76,0.6);background:linear-gradient(160deg,#1e1a08,#0e0c04);}
+  .craft-card.craft-card-selected{border-color:var(--gold);box-shadow:0 0 10px rgba(201,168,76,0.2);}
+  .craft-card.craft-card-disabled{opacity:0.45;}
+  .craft-card-icon{font-size:28px;line-height:1;}
+  .craft-card-name{font-family:'Cinzel',serif;font-size:11px;color:var(--parchment);line-height:1.2;}
+  .craft-card-cost{font-size:10px;color:var(--parchment3);}
+  .craft-card-bonus{font-size:10px;color:#88bb88;}
+  .craft-card-owned-badge{font-size:9px;color:var(--gold);font-family:'Cinzel',serif;letter-spacing:.5px;}
+  .craft-section-label{
+    font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;
+    color:var(--parchment3);text-transform:uppercase;
+    margin:12px 0 8px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .craft-section-label::after{content:'';flex:1;height:1px;background:rgba(201,168,76,0.15);}
+
+  /* Hard Question Challenge Modal */
+  #hard-question-modal{
+    position:fixed;inset:0;z-index:6000;display:none;
+    background:rgba(0,0,0,0.92);
+    align-items:center;justify-content:center;
+    overflow-y:auto;padding:20px;
+  }
+  #hard-question-modal.show{display:flex;}
+  .hq-container{
+    background:linear-gradient(160deg,#1a1408,#0d0a04);
+    border:2px solid var(--gold);
+    border-radius:8px;
+    padding:24px;
+    max-width:800px;
+    width:100%;
+    max-height:90vh;
+    overflow-y:auto;
+    box-shadow:0 0 40px rgba(201,168,76,0.3);
+  }
+  .hq-title{
+    font-family:'Cinzel Decorative',serif;
+    font-size:24px;
+    color:var(--gold-light);
+    text-align:center;
+    margin-bottom:8px;
+    text-shadow:0 0 20px rgba(201,168,76,0.5);
+  }
+  .hq-subtitle{
+    text-align:center;
+    color:var(--parchment3);
+    font-size:13px;
+    margin-bottom:16px;
+  }
+  .hq-rewards{
+    display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+  .hq-reward-tag{
+    background:rgba(201,168,76,0.15);
+    border:1px solid var(--gold-dark);
+    border-radius:4px;
+    padding:6px 12px;
+    font-family:'Cinzel',serif;
+    font-size:12px;
+    color:var(--gold);
+  }
+  .hq-intro{
+    background:rgba(0,0,0,0.3);
+    border:1px solid rgba(201,168,76,0.2);
+    border-radius:4px;
+    padding:12px;
+    margin-bottom:16px;
+    font-size:13px;
+    color:var(--parchment2);
+    line-height:1.6;
+  }
+  .hq-part{
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(201,168,76,0.15);
+    border-radius:6px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .hq-part-header{
+    font-family:'Cinzel',serif;
+    font-size:14px;
+    color:var(--gold);
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .hq-part-letter{
+    background:var(--gold-dark);
+    color:var(--stone);
+    width:24px;height:24px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;
+    font-size:12px;
+  }
+  .hq-part-question{
+    font-size:13px;
+    color:var(--parchment2);
+    line-height:1.6;
+    margin-bottom:12px;
+  }
+  .hq-answer-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .hq-answer-label{
+    font-family:'Cinzel',serif;
+    font-size:11px;
+    color:var(--parchment3);
+    letter-spacing:1px;
+  }
+  .hq-input{
+    background:var(--stone3);
+    border:1px solid var(--gold-dark);
+    border-radius:4px;
+    padding:8px 12px;
+    color:var(--parchment);
+    font-family:'Crimson Text',serif;
+    font-size:15px;
+    width:120px;
+  }
+  .hq-input:focus{
+    outline:none;
+    border-color:var(--gold);
+  }
+  .hq-input.correct{
+    border-color:#44ff88;
+    background:rgba(68,255,136,0.1);
+  }
+  .hq-input.wrong{
+    border-color:#ff4444;
+    background:rgba(255,68,68,0.1);
+  }
+  .hq-status{
+    font-size:18px;
+    margin-left:6px;
+  }
+  .hq-buttons{
+    display:flex;gap:12px;justify-content:center;margin-top:20px;
+  }
+  .hq-corner-btn{
+    position:absolute;
+    top:10px;
+    right:10px;
+    background:linear-gradient(160deg,#3d1a3d,#1a0d1a);
+    border:2px solid #cc44cc;
+    color:#ffaaff;
+    font-family:'Cinzel',serif;
+    font-size:11px;
+    padding:8px 14px;
+    border-radius:4px;
+    cursor:pointer;
+    transition:all .2s;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    animation:hq-pulse 2s infinite;
+  }
+  .hq-corner-btn:hover{
+    background:linear-gradient(160deg,#5a2a5a,#2a1a2a);
+    border-color:#ff66ff;
+    transform:scale(1.05);
+  }
+  @keyframes hq-pulse{
+    0%,100%{box-shadow:0 0 5px rgba(204,68,204,0.3);}
+    50%{box-shadow:0 0 15px rgba(204,68,204,0.6);}
+  }
+
+  /* Unit Selection Screen */
+  .unit-select-container{
+    max-width:600px;
+    margin:0 auto;
+    padding:20px;
+  }
+  .unit-select-title{
+    font-family:'Cinzel Decorative',serif;
+    font-size:32px;
+    color:var(--gold-light);
+    text-align:center;
+    margin-bottom:8px;
+    text-shadow:0 0 20px rgba(201,168,76,0.5);
+  }
+  .unit-select-subtitle{
+    text-align:center;
+    color:var(--parchment3);
+    font-size:14px;
+    margin-bottom:24px;
+  }
+  .unit-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+    margin-bottom:24px;
+  }
+  .unit-card{
+    background:linear-gradient(160deg,#1c1408,#0d0a04);
+    border:2px solid var(--gold-dark);
+    border-radius:6px;
+    padding:16px;
+    cursor:pointer;
+    transition:all .2s;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .unit-card:hover{
+    border-color:var(--gold);
+    background:linear-gradient(160deg,#2a1e0c,#181006);
+    transform:translateY(-2px);
+  }
+  .unit-card.selected{
+    border-color:var(--gold);
+    background:linear-gradient(160deg,#382808,#1e1506);
+    box-shadow:0 0 15px rgba(201,168,76,0.25);
+  }
+  .unit-checkbox{
+    width:24px;
+    height:24px;
+    border:2px solid var(--gold-dark);
+    border-radius:4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    flex-shrink:0;
+    transition:all .2s;
+  }
+  .unit-card.selected .unit-checkbox{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:var(--stone);
+  }
+  .unit-info{
+    flex:1;
+  }
+  .unit-name{
+    font-family:'Cinzel',serif;
+    font-size:16px;
+    color:var(--gold-light);
+    margin-bottom:4px;
+  }
+  .unit-desc{
+    font-size:12px;
+    color:var(--parchment3);
+  }
+  .unit-select-warning{
+    text-align:center;
+    color:#ff8888;
+    font-size:13px;
+    margin-bottom:16px;
+    display:none;
+  }
+  .unit-select-warning.show{
+    display:block;
+  }
+</style>
+</head>
+<body>
+<div id="screen-flash"></div>
+
+<!-- HARD QUESTION CHALLENGE MODAL -->
+<div id="hard-question-modal">
+  <div class="hq-container">
+    <h2 class="hq-title">🧠 Calculus Challenge</h2>
+    <p class="hq-subtitle">CALCULATOR ALLOWED — Answer all 4 parts correctly to claim your rewards!</p>
+    
+    <div class="hq-rewards">
+      <span class="hq-reward-tag">🪙 +50 Gold</span>
+      <span class="hq-reward-tag">❤️ +10 Base HP</span>
+      <span class="hq-reward-tag">⭐ +5 Stat Points</span>
+    </div>
+    
+    <div class="hq-intro">
+      <strong style="color:var(--gold)">Problem Setup:</strong><br>
+      A colony of bacteria grows at a rate of <strong>dP/dt = 14P(1 - P/800)</strong>, P(0) = 50, where P is the population in thousands and t is time in hours.<br><br>
+      A single cell's position is tracked parametrically by <strong>x(t) = t - sin(t)</strong>, <strong>y(t) = 1 - cos(t)</strong>.<br><br>
+      A sensor scans the colony in the polar path of <strong>r = 3sin(2θ)</strong>, θ ≥ 0.<br><br>
+      The colony emits a signal modeled by the series <strong>f(x) = Σ(n=0 to ∞) (-1)ⁿ x^(2n+1) / ((2n+1)·4ⁿ)</strong>.<br><br>
+      <em style="color:#ffaa44">ROUND TO THE NEAREST HUNDREDTH FOR ALL PARTS (except Part D — round to nearest thousandth)</em>
+    </div>
+    
+    <!-- Part A -->
+    <div class="hq-part">
+      <div class="hq-part-header">
+        <span class="hq-part-letter">A</span>
+        <span>Differential Equation & Parametric Limit</span>
+      </div>
+      <div class="hq-part-question">
+        Find the particular solution of P, then find <strong>lim(x→0⁺) [P(t) - 50] / t</strong>.<br>
+        Your final answer should be <strong>P(2) - the limit</strong>.
+      </div>
+      <div class="hq-answer-row">
+        <span class="hq-answer-label">ANSWER:</span>
+        <input type="text" class="hq-input" id="hq-answer-a" placeholder="">
+        <span class="hq-status" id="hq-status-a"></span>
+      </div>
+    </div>
+    
+    <!-- Part B -->
+    <div class="hq-part">
+      <div class="hq-part-header">
+        <span class="hq-part-letter">B</span>
+        <span>Euler's Method & Arc Length</span>
+      </div>
+      <div class="hq-part-question">
+        Use Euler's method with <strong>two steps of equal size</strong> to approximate P(4).<br>
+        Then find the difference between Euler's method approximation and the arc length of the parametric curve from [0, 2π].<br>
+        Your final answer should be <strong>(Euler method) - (arc length)</strong>.
+      </div>
+      <div class="hq-answer-row">
+        <span class="hq-answer-label">ANSWER:</span>
+        <input type="text" class="hq-input" id="hq-answer-b" placeholder="">
+        <span class="hq-status" id="hq-status-b"></span>
+      </div>
+    </div>
+    
+    <!-- Part C -->
+    <div class="hq-part">
+      <div class="hq-part-header">
+        <span class="hq-part-letter">C</span>
+        <span>Polar Derivatives & Area</span>
+      </div>
+      <div class="hq-part-question">
+        For r = 3sin(2θ), find <strong>dy/dx at θ = π/6</strong>.<br>
+        Find the area inside r = 3sin(2θ) and outside of r = 3/2 inside the 1st quadrant.<br>
+        Your final answer will be <strong>(dy/dx you found) + (the area)</strong>.
+      </div>
+      <div class="hq-answer-row">
+        <span class="hq-answer-label">ANSWER:</span>
+        <input type="text" class="hq-input" id="hq-answer-c" placeholder="">
+        <span class="hq-status" id="hq-status-c"></span>
+      </div>
+    </div>
+    
+    <!-- Part D -->
+    <div class="hq-part">
+      <div class="hq-part-header">
+        <span class="hq-part-letter">D</span>
+        <span>Series Convergence & Taylor Polynomial</span>
+      </div>
+      <div class="hq-part-question">
+        Find the <strong>radius of convergence</strong> of the series.<br>
+        Then find the 5th degree Taylor polynomial at x = 0, and find the error bound between |f(1) - T₅(x)|.<br>
+        Your final answer should be <strong>(ROC) - (error)</strong>.<br>
+        <em style="color:#ffaa44">Round to the nearest thousandth.</em>
+      </div>
+      <div class="hq-answer-row">
+        <span class="hq-answer-label">ANSWER:</span>
+        <input type="text" class="hq-input" id="hq-answer-d" placeholder="">
+        <span class="hq-status" id="hq-status-d"></span>
+      </div>
+    </div>
+    
+    <div class="hq-buttons">
+      <button class="btn btn-primary" onclick="submitHardQuestion()">Submit Answers</button>
+      <button class="btn" onclick="closeHardQuestion()">Cancel</button>
+    </div>
+    
+    <div id="hq-result" style="text-align:center;margin-top:16px;font-size:15px;"></div>
+  </div>
+</div>
+
+<!-- WAVE CLEAR OVERLAY -->
+<div id="wave-clear-overlay">
+  <div style="font-size:64px;line-height:1" id="wco-icon">⚔️</div>
+  <div class="wco-title" id="wco-title">Victory!</div>
+  <div class="wco-sub" id="wco-sub">WAVE CLEARED</div>
+  <div class="wco-loot" id="wco-loot"></div>
+  <button class="btn btn-primary wco-btn" onclick="dismissWaveClear()">Continue →</button>
+</div>
+
+<!-- HOW TO PLAY SCREEN -->
+<div id="how-to-play" class="screen">
+  <div style="max-width:700px;margin:0 auto;padding:20px 16px">
+    <div style="text-align:center;margin-bottom:20px">
+      <h2 style="font-size:28px">How to Play</h2>
+      <p class="muted">Everything you need to survive the dungeon</p>
+    </div>
+
+    <div class="panel htp-section">
+      <div class="htp-section-title">🗺️ The Run</div>
+      <div class="htp-row"><span class="htp-icon">⚔️</span><span>Fight through <strong style="color:var(--gold)">15 stages</strong> of dungeon encounters. Defeat normal mobs on stages 1–4, 6–9, 11–14, face a <strong style="color:#aaccff">Knight Captain miniboss</strong> on stages 5 and 10, and battle the <strong style="color:var(--gold)">King</strong> on stage 15 to win.</span></div>
+      <div class="htp-row"><span class="htp-icon">🎯</span><span>After each fight you visit a <strong style="color:var(--gold)">rest camp</strong> to heal, allocate stat points, craft gear, and choose an event.</span></div>
+      <div class="htp-row"><span class="htp-icon">📈</span><span>Enemies scale in difficulty each stage — come prepared!</span></div>
+    </div>
+
+    <div class="panel htp-section">
+      <div class="htp-section-title">🔢 Math Combat</div>
+      <div class="htp-row"><span class="htp-icon">❓</span><span>Every action — attack, heal, or buff — requires you to correctly answer <strong style="color:var(--gold)">3 math questions</strong> in a row.</span></div>
+      <div class="htp-row"><span class="htp-icon">✅</span><span>Answer all 3 correctly and your move fires. A wrong answer resets your progress for that question.</span></div>
+      <div class="htp-row"><span class="htp-icon">📐</span><span>Questions include <strong>addition</strong>, <strong>subtraction</strong>, and <strong>multiplication</strong>. Difficulty scales with your stage number.</span></div>
+      <div class="htp-tip">💡 The player always attacks first each round, then all surviving enemies retaliate. Plan accordingly!</div>
+    </div>
+
+    <div class="panel htp-section">
+      <div class="htp-section-title">🧙 Classes</div>
+      <div class="htp-class-grid">
+        <div class="htp-class-card"><span class="icon">⚔️</span><span class="name">Warrior</span><span class="desc">High HP. Scales STR (4% dmg/pt) and HP stat (6% MaxHP + bonus dmg/pt). Enrage for burst damage.</span></div>
+        <div class="htp-class-card"><span class="icon">🔮</span><span class="name">Mage</span><span class="desc">Powerful INT scaling (4% dmg/pt). Glass cannon with AoE spells and Mana Overflow burst.</span></div>
+        <div class="htp-class-card"><span class="icon">✨</span><span class="name">Priest</span><span class="desc">FTH scales healing (4%/pt). Sustain through faith. HP stat also boosts heals.</span></div>
+        <div class="htp-class-card"><span class="icon">🛡️</span><span class="name">Knight</span><span class="desc">Warrior evolution. Extra base HP, Order Up buff grants damage and defense simultaneously.</span></div>
+        <div class="htp-class-card"><span class="icon">💜</span><span class="name">Wizard</span><span class="desc">Mage evolution. Lightning Strike hits all enemies. Mana Overdrive burns targets permanently.</span></div>
+        <div class="htp-class-card"><span class="icon">🌿</span><span class="name">Druid</span><span class="desc">Priest evolution. Nature's Wrath deals 9 dmg + heals 50% HP, Vine Leech steals HP, Nature's Power heals 50%.</span></div>
+      </div>
+      <div class="htp-tip">💡 Classes can evolve at a rest camp if you meet the requirements. Evolutions keep your moves and add new powerful abilities.</div>
+    </div>
+
+    <div class="panel htp-section">
+      <div class="htp-section-title">📊 Stats & Scaling</div>
+      <div class="htp-row"><span class="htp-icon">❤️</span><span><strong style="color:var(--gold)">HP stat</strong> — increases your max HP. Warrior/Knight: +6%/pt · Priest/Druid: +4%/pt · Mage/Wizard: +3%/pt</span></div>
+      <div class="htp-row"><span class="htp-icon">⚔️</span><span><strong style="color:var(--gold)">Strength</strong> — primary damage stat for Warrior/Knight. +4% dmg/pt. Weak for other classes.</span></div>
+      <div class="htp-row"><span class="htp-icon">🔮</span><span><strong style="color:var(--gold)">Intelligence</strong> — primary damage stat for Mage/Wizard. +4% dmg/pt. Weak for other classes.</span></div>
+      <div class="htp-row"><span class="htp-icon">✨</span><span><strong style="color:var(--gold)">Faith</strong> — primary heal stat for Priest/Druid. +4% healing/pt. Weak for other classes.</span></div>
+      <div class="htp-tip">💡 There are no stat caps! Invest heavily in your class's primary stat for exponential power growth.</div>
+      <div class="htp-tip">💡 Warriors benefit from stacking HP — it boosts both max HP and deals bonus damage.</div>
+    </div>
+
+    <div class="panel htp-section">
+      <div class="htp-section-title">🎪 Events</div>
+      <div class="htp-row"><span class="htp-icon">🏪</span><span><strong style="color:var(--gold)">Shop</strong> — spend gold on potions and useful items.</span></div>
+      <div class="htp-row"><span class="htp-icon">💪</span><span><strong style="color:var(--gold)">Training</strong> — gain a free stat point in HP or your class's primary stat.</span></div>
+      <div class="htp-row"><span class="htp-icon">🎲</span><span><strong style="color:var(--gold)">Random Event</strong> — mysterious happenings. Could be treasure, curses, or surprises.</span></div>
+      <div class="htp-row"><span class="htp-icon">🔧</span><span><strong style="color:var(--gold)">Crafting</strong> — use materials dropped by enemies to forge armor and weapons.</span></div>
+    </div>
+
+    <div class="panel htp-section">
+      <div class="htp-section-title">⚗️ Statuses & Items</div>
+      <div class="htp-row"><span class="htp-icon">🔥</span><span><strong style="color:#ff9944">Burn</strong> — deals damage each turn. Applied by Mage fire spells.</span></div>
+      <div class="htp-row"><span class="htp-icon">☠️</span><span><strong style="color:#88ff44">Poison</strong> — deals damage each turn. Applied by Priest's Poison Powder.</span></div>
+      <div class="htp-row"><span class="htp-icon">🩸</span><span><strong style="color:#ff4444">Bleed</strong> — deals damage each turn. Applied by Warrior's Stab.</span></div>
+      <div class="htp-row"><span class="htp-icon">🧪</span><span>Healing potions and damage potions can be used during combat at the cost of your turn.</span></div>
+      <div class="htp-row"><span class="htp-icon">🐀</span><span>Enemies drop crafting materials: Rat Skins, Leather, Cloth, Iron Ingots. Goblins can steal your gold!</span></div>
+    </div>
+
+    <div class="panel htp-section">
+      <div class="htp-section-title">🛡️ Bosses</div>
+      <div class="htp-row"><span class="htp-icon">🛡️</span><span><strong style="color:#aaccff">Knight Captain (Stage 5 & 10)</strong> — 30 HP miniboss. Hits hard. Defeating him grants 3 bonus stat points.</span></div>
+      <div class="htp-row"><span class="htp-icon">⚔️</span><span><strong style="color:var(--gold)">Prince (Stage 8)</strong> — mid-run boss. Defeat him to earn a powerful class-specific weapon upgrade.</span></div>
+      <div class="htp-row"><span class="htp-icon">👑</span><span><strong style="color:var(--gold)">The King (Stage 15)</strong> — 75 HP final boss. Victory ends the run. You win!</span></div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" style="font-size:15px;padding:12px 30px" onclick="showScreen('title')">← Back to Title</button>
+      <button class="btn btn-primary" style="font-size:15px;padding:12px 30px" onclick="showScreen('unit-select')">Select Units →</button>
+    </div>
+  </div>
+</div>
+
+<div id="title-screen" class="screen active">
+  <div style="max-width:600px;margin:0 auto">
+    <div style="font-size:60px;margin-bottom:10px">⚔️</div>
+    <h1 class="game-title" style="font-size:38px;line-height:1.2;text-shadow:0 0 30px rgba(201,168,76,0.6)">Realm of<br>Reckoning</h1>
+    <p class="subtitle">Answer math, conquer dungeons</p>
+    <div class="panel" style="text-align:left">
+      <div class="panel-title">The Quest</div>
+      <p style="font-size:15px;line-height:1.8;color:var(--parchment2)">
+        Choose your class, then fight through <strong style="color:var(--gold)">15 stages</strong> of dungeon encounters. 
+        Answer <strong style="color:var(--gold)">3 math questions</strong> to unleash each move. 
+        Face minibosses every 5 stages and slay the King to claim victory!
+      </p>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px">
+      <button class="btn btn-primary" style="font-size:16px;padding:14px 40px" onclick="showScreen('unit-select')">Begin Your Quest</button>
+      <button class="btn" style="font-size:15px;padding:14px 28px" onclick="showScreen('how-to-play')">📖 How to Play</button>
+    </div>
+  </div>
+</div>
+
+<!-- UNIT SELECT -->
+<div id="unit-select" class="screen">
+  <div class="unit-select-container">
+    <h1 class="unit-select-title">📚 Select Units</h1>
+    <p class="unit-select-subtitle">Choose which math units to include in your quest. Questions will be drawn from selected units.</p>
+    
+    <div class="unit-grid" id="unit-cards">
+      <div class="unit-card" data-unit="1" onclick="toggleUnit(1)">
+        <div class="unit-checkbox"></div>
+        <div class="unit-info">
+          <div class="unit-name">Unit 1</div>
+          <div class="unit-desc">Questions from Unit 1</div>
+        </div>
+      </div>
+      <div class="unit-card" data-unit="2" onclick="toggleUnit(2)">
+        <div class="unit-checkbox"></div>
+        <div class="unit-info">
+          <div class="unit-name">Unit 2</div>
+          <div class="unit-desc">Questions from Unit 2</div>
+        </div>
+      </div>
+      <div class="unit-card" data-unit="3" onclick="toggleUnit(3)">
+        <div class="unit-checkbox"></div>
+        <div class="unit-info">
+          <div class="unit-name">Unit 3</div>
+          <div class="unit-desc">Questions from Unit 3</div>
+        </div>
+      </div>
+      <div class="unit-card" data-unit="4" onclick="toggleUnit(4)">
+        <div class="unit-checkbox"></div>
+        <div class="unit-info">
+          <div class="unit-name">Unit 4</div>
+          <div class="unit-desc">Questions from Unit 4</div>
+        </div>
+      </div>
+      <div class="unit-card" data-unit="5" onclick="toggleUnit(5)">
+        <div class="unit-checkbox"></div>
+        <div class="unit-info">
+          <div class="unit-name">Unit 5</div>
+          <div class="unit-desc">Questions from Unit 5</div>
+        </div>
+      </div>
+      <div class="unit-card" data-unit="6" onclick="toggleUnit(6)">
+        <div class="unit-checkbox"></div>
+        <div class="unit-info">
+          <div class="unit-name">Unit 6</div>
+          <div class="unit-desc">Questions from Unit 6</div>
+        </div>
+      </div>
+      <div class="unit-card" data-unit="7" onclick="toggleUnit(7)">
+        <div class="unit-checkbox"></div>
+        <div class="unit-info">
+          <div class="unit-name">Unit 7</div>
+          <div class="unit-desc">Questions from Unit 7</div>
+        </div>
+      </div>
+      <div class="unit-card" data-unit="8" onclick="toggleUnit(8)">
+        <div class="unit-checkbox"></div>
+        <div class="unit-info">
+          <div class="unit-name">Unit 8</div>
+          <div class="unit-desc">Questions from Unit 8</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="unit-select-warning" id="unit-warning">⚠️ Please select at least one unit to continue</div>
+    
+    <div style="text-align:center;display:flex;gap:12px;justify-content:center">
+      <button class="btn" onclick="showScreen('title-screen')">← Back</button>
+      <button class="btn btn-primary" id="confirm-units-btn" onclick="confirmUnits()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLASS SELECT -->
+<div id="class-select" class="screen">
+  <div style="max-width:700px;margin:0 auto">
+    <h2 style="text-align:center;margin-bottom:6px">Choose Your Class</h2>
+    <p class="muted" style="text-align:center;margin-bottom:20px">Your class cannot be changed until victory or defeat</p>
+    <div class="grid3" id="class-cards"></div>
+    <div style="text-align:center;margin-top:20px">
+      <button class="btn btn-primary" id="confirm-class-btn" disabled onclick="confirmClass()">Embark →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN GAME -->
+<div id="game-screen" class="screen">
+  <div id="top-bar" class="top-bar"></div>
+  <div id="game-content" style="max-width:800px;margin:0 auto;padding:10px 16px"></div>
+</div>
+
+<!-- END SCREENS -->
+<div id="victory-screen" class="screen">
+  <div class="victory-screen">
+    <div style="font-size:80px">👑</div>
+    <h1 style="font-size:48px;margin:10px 0">Victory!</h1>
+    <p style="font-size:20px;color:var(--parchment2);margin:10px 0">You have slain the King!</p>
+    <div id="victory-stats" class="panel" style="min-width:300px;text-align:left;margin:20px 0"></div>
+    <button class="btn btn-primary" onclick="resetGame()">Play Again</button>
+  </div>
+</div>
+<div id="defeat-screen" class="screen">
+  <div class="defeat-screen">
+    <div style="font-size:80px">💀</div>
+    <h1 style="font-size:48px;margin:10px 0;color:#ff4444">Defeated</h1>
+    <p style="font-size:20px;color:var(--parchment2);margin:10px 0" id="defeat-msg">You have fallen...</p>
+    <button class="btn btn-primary" onclick="resetGame()">Try Again</button>
+  </div>
+</div>
+
+<script>
+// ==================== UNIT SELECTION ====================
+let selectedUnits = [];
+
+function toggleUnit(unitNum) {
+  const card = document.querySelector(`.unit-card[data-unit="${unitNum}"]`);
+  const idx = selectedUnits.indexOf(unitNum);
+  
+  if (idx === -1) {
+    selectedUnits.push(unitNum);
+    card.classList.add('selected');
+    card.querySelector('.unit-checkbox').textContent = '✓';
+  } else {
+    selectedUnits.splice(idx, 1);
+    card.classList.remove('selected');
+    card.querySelector('.unit-checkbox').textContent = '';
+  }
+  
+  // Hide warning if at least one unit selected
+  document.getElementById('unit-warning').classList.toggle('show', selectedUnits.length === 0);
+}
+
+function confirmUnits() {
+  if (selectedUnits.length === 0) {
+    document.getElementById('unit-warning').classList.add('show');
+    return;
+  }
+  // Store selected units for question generation
+  G.selectedUnits = [...selectedUnits];
+  showScreen('class-select');
+}
+
+function resetUnitSelection() {
+  selectedUnits = [];
+  document.querySelectorAll('.unit-card').forEach(card => {
+    card.classList.remove('selected');
+    card.querySelector('.unit-checkbox').textContent = '';
+  });
+  document.getElementById('unit-warning').classList.remove('show');
+}
+
+// Unit-based questions - each question has: q (question text), choices (array of 4 options), ans (correct answer)
+const UNIT_QUESTIONS = {
+  1: [
+    // Easy questions - answers from images
+    {q: "A graph shows f(x)→3 as x→2⁻ and f(x)→5 as x→2⁺. Does lim f(x) exist as x→2?", choices: ["Yes", "No", "DNE", "Cannot determine"], ans: "DNE"},
+    {q: "A table of values for f(x) near x=1 approaches 4 from both sides. What is the limit?", choices: ["1", "2", "4", "DNE"], ans: "4"},
+    {q: "lim (sin x)/x as x→0 = ?", choices: ["0", "1", "∞", "DNE"], ans: "1"},
+    {q: "Use squeeze theorem: lim x²sin(1/x) as x→0 = ?", choices: ["0", "1", "-1", "DNE"], ans: "0"},
+    {q: "lim (sin 3x)/x as x→0 = ?", choices: ["1", "3", "0", "1/3"], ans: "3"},
+    {q: "Use Squeeze theorem: lim x²cos(1/x) as x→0 = ?", choices: ["0", "1", "-1", "DNE"], ans: "0"},
+    {q: "lim (x³-1)/(x-1) as x→0 = ?", choices: ["0", "1", "3", "-1"], ans: "1"},
+    {q: "If lim f(x)=2 and lim g(x)=3, find lim(f+g)", choices: ["5", "6", "1", "0"], ans: "5"},
+    {q: "If lim f(x)=3 and lim g(x)=0, what is lim f(x)g(x)?", choices: ["0", "3", "∞", "DNE"], ans: "0"},
+    {q: "lim 1/x as x→∞ = ?", choices: ["0", "1", "∞", "DNE"], ans: "0"},
+    {q: "lim (2x²+1)/x² as x→∞ = ?", choices: ["0", "1", "2", "∞"], ans: "2"},
+    {q: "Does IVT guarantee a zero of f(x)=x³-2 on [1,2]? (f(1)=-1, f(2)=6)", choices: ["Yes", "No", "Maybe", "Need more info"], ans: "Yes"},
+    {q: "Does IVT apply to f(x)=1/x on [-1,1]?", choices: ["Yes", "No, not continuous at x=0", "Yes, always", "Depends"], ans: "No, not continuous at x=0"},
+    {q: "f(0)=-1, f(2)=3, f continuous. Does f(x)=0 have a solution?", choices: ["Yes, by IVT", "No", "Maybe", "Cannot determine"], ans: "Yes, by IVT"},
+    // Medium questions - highlighted answers from images
+    {q: "For x≥0, y=5 is horizontal asymptote. Which is true?", choices: ["f(0)=5", "f(5) undefined", "lim f(x)=∞ as x→5", "lim f(x)=5 as x→∞"], ans: "lim f(x)=5 as x→∞"},
+    {q: "f continuous on [-12,4], f(-12)=-23, f(4)=14. By IVT:", choices: ["f(0)=0", "f has max on (-12,4)", "f always increasing", "f(x) has at least one zero on (-12,4)"], ans: "f(x) has at least one zero on (-12,4)"},
+    {q: "If f(x)=x² has removable discontinuity at x=1, which is true?", choices: ["f continuous at x=1", "lim f(x) exists as x→1", "lim⁺ f(x)≠lim⁻ f(x)", "f differentiable at x=1"], ans: "lim f(x) exists as x→1"},
+    {q: "If lim f(x)=6 as x→1, which must be true?", choices: ["None", "f continuous at x=1", "f differentiable at x=1", "f(1)=6"], ans: "None"},
+    {q: "lim f(x)=L (real), removable discontinuity at x=a. Which is true?", choices: ["f(a)=L", "f(x) is defined at a", "f(x) continuous at x=a", "f'(a) exists"], ans: "f(x) is defined at a"},
+    {q: "Which is continuous at x=0? I:ln(x) II:eˣ III:ln(eˣ-1)", choices: ["I only", "I and II", "II and III", "II only"], ans: "II only"},
+    {q: "Which graph has y=1 as asymptote?", choices: ["y=ln x", "x/(x+1)", "x²/(x+1)", "eˣ"], ans: "x/(x+1)"},
+    {q: "lim (8x⁴+8x²)/(3x⁴-16x²) as x→0 = ?", choices: ["5/3", "1", "0", "-1/2"], ans: "-1/2"},
+    {q: "lim (2x³-2x²+3x-4)/(3x³-3x²+2x-1) as x→∞ = ?", choices: ["4", "1/4", "0", "2/3"], ans: "2/3"},
+    {q: "f(x)=(x²-9)/(x-3) if x≠3, f(3)=2. f has limit at x=3. f is continuous at x=3. f is differentiable at x=3. Which is true?", choices: ["I only", "II only", "I and III", "I, II, and III"], ans: "I only"},
+    // Hard questions - highlighted answers from images
+    {q: "f continuous on [a,b]. If f(x) is a maxima, then f'(c)=0. Which is true?", choices: ["f' exists on (a,b)", "If f(x) is maxima → f'(c)=0", "lim f(x) as x→c = f(lim x as x→c)", "f'(c)=0 for some c"], ans: "lim f(x) as x→c = f(lim x as x→c)"},
+    {q: "Domain of f(x)=√(x²-4)/(x-3)?", choices: ["|x|≤2", "|x|≥2", "|x|≥2 and x≠3", "|x|≤2 and x≠3"], ans: "|x|≥2 and x≠3"},
+    {q: "y=(ax+b)/(x+c) has HA at y=3, VA at x=4. Then a+c=?", choices: ["-5", "-1", "1", "0"], ans: "-1"},
+    {q: "f(x)=(x²-1)/(x+1) for x≠-1, f(-1)=k. For continuity at x=-1, k=?", choices: ["-2", "2", "0", "1"], ans: "-2"},
+    {q: "f continuous on [0,1], g(0)=1, g(1)=0. Which is NOT true?", choices: ["∃c: f(c)>f(x) for all x", "a=b → g(a)=g(b)", "∃h: g(h)=1/2", "∃h: g(h)=3/2"], ans: "∃h: g(h)=3/2"}
+  ],
+  2: [
+    // Easy questions (derivatives) - answers from image, generate wrong choices where needed
+    {q: "What is the derivative of x^(1/3)/3?", choices: ["1/(9x^(2/3))", "1/(3x^(2/3))", "x^(-2/3)/9", "1/3x^(1/3)"], ans: "1/(9x^(2/3))"},
+    {q: "Is |x| differentiable?", choices: ["Yes", "No", "Only at x>0", "Only at x<0"], ans: "No"},
+    {q: "f(x)=(x+6)/(x²+10x+24), is f(x) differentiable at x=-4?", choices: ["Yes", "No, f(x) is not differentiable", "Only from the right", "Only from the left"], ans: "No, f(x) is not differentiable"},
+    {q: "f(x)=x³-6x²+9x, where is f(x) increasing?", choices: ["(-∞,1)∪(3,∞)", "(1,3)", "(-∞,1)", "(3,∞)"], ans: "(-∞,1)∪(3,∞)"},
+    {q: "Differentiate (3x²+1)⁵", choices: ["30x(3x²+1)⁴", "5(3x²+1)⁴", "15x(3x²+1)⁴", "6x(3x²+1)⁴"], ans: "30x(3x²+1)⁴"},
+    {q: "Differentiate e^(x²+2x)", choices: ["(2x+2)e^(x²+2x)", "e^(x²+2x)", "2xe^(x²+2x)", "(x²+2x)e^(x²+2x)"], ans: "(2x+2)e^(x²+2x)"},
+    {q: "Differentiate ln(5x²+3)", choices: ["10x/(5x²+3)", "1/(5x²+3)", "5x/(5x²+3)", "2x/(5x²+3)"], ans: "10x/(5x²+3)"},
+    {q: "Differentiate cos(x) + tan(x)", choices: ["-sin(x) + sec²(x)", "sin(x) + sec²(x)", "-cos(x) + sec²(x)", "-sin(x) + tan²(x)"], ans: "-sin(x) + sec²(x)"},
+    {q: "Differentiate x²eˣ", choices: ["2xeˣ + x²eˣ", "2xeˣ", "x²eˣ", "2x + eˣ"], ans: "2xeˣ + x²eˣ"},
+    {q: "Differentiate cos³(2x)", choices: ["-6cos²(2x)sin(2x)", "-3cos²(2x)sin(2x)", "6cos²(2x)sin(2x)", "-2cos²(2x)sin(2x)"], ans: "-6cos²(2x)sin(2x)"},
+    {q: "Differentiate (sin x)/x", choices: ["(xcos(x)-sin(x))/x²", "cos(x)/x", "(cos(x)-sin(x))/x²", "cos(x)/x²"], ans: "(xcos(x)-sin(x))/x²"},
+    {q: "Differentiate x²/(x+1)", choices: ["(x²+2x)/(x+1)²", "2x/(x+1)", "2x/(x+1)²", "x²/(x+1)²"], ans: "(x²+2x)/(x+1)²"},
+    {q: "Differentiate ln(x²+1)", choices: ["2x/(x²+1)", "1/(x²+1)", "x/(x²+1)", "2/(x²+1)"], ans: "2x/(x²+1)"},
+    {q: "Differentiate xeˣ", choices: ["eˣ + xeˣ", "xeˣ", "eˣ", "x·eˣ⁻¹"], ans: "eˣ + xeˣ"},
+    {q: "Evaluate lim (eˣ-1-x)/x² as x→0", choices: ["1/2", "0", "1", "∞"], ans: "1/2"},
+    {q: "Verify MVT for f(x)=x² on [1,3]. Find c where f'(c)=(f(3)-f(1))/(3-1)", choices: ["c=2", "c=4", "c=1", "c=3"], ans: "c=2"},
+    // Medium questions - highlighted answers from image
+    {q: "f(x)=(x²-4)/(x-2) for x≠2, f(x)=k for x=2. Find k for differentiability.", choices: ["k=4", "k=2", "k=-4", "k=-2"], ans: "k=4"},
+    {q: "f'(x) has jump discontinuity at x=3. Right limit=5, left limit=2. Which is true?", choices: ["f continuous and differentiable", "f continuous but not differentiable", "f'(3) exists", "f not continuous"], ans: "f continuous but not differentiable"},
+    {q: "Find local maxima given f'(x)=(x-1)²(x+2)(x-4)", choices: ["x=-2", "x=-2, x=1", "x=4, x=1", "x=4"], ans: "x=-2"},
+    {q: "If f'(1/4)=6 and f(1/4)=3, find g'(π/6) if g(x)=f(sin²x)", choices: ["3√3", "1/2", "√3", "√3/2"], ans: "3√3"},
+    {q: "Find values in [0,2π] where tangent to y=2sinx+cos2x is horizontal", choices: ["π/6, π/2, 5π/6, 3π/2", "π/6, π/2", "π/3, 0, 2π", "π/2, 3π/2"], ans: "π/6, π/2, 5π/6, 3π/2"},
+    {q: "f(x)=eˣsin(x)/(x²+1). Find tangent line at x=0.", choices: ["y=x", "y=-x", "y=x-1", "y=x+1"], ans: "y=x"},
+    {q: "Find f''(x) if f(x)=ln(x²-4x+5)", choices: ["(-2x²+8x-6)/(x²-4x+5)²", "(2x-4)/(x²-4x+5)", "-2/(x²-4x+5)²", "(2x-4)²/(x²-4x+5)²"], ans: "(-2x²+8x-6)/(x²-4x+5)²"},
+    {q: "Evaluate lim (eˣ-1-x/2)/x³ as x→0", choices: ["∞", "1/3", "1/6", "0"], ans: "∞"},
+    // Hard questions - highlighted answers from image
+    {q: "f(x)=ax²+b for x≤1, f(x)=3x-1 for x>1. Find a,b for differentiability at x=1.", choices: ["a=3/2, b=1/2", "a=1, b=2", "a=1/2, b=3/2", "a=2, b=1"], ans: "a=3/2, b=1/2"},
+    {q: "f(2)=3, f'(2)=-1, g(2)=5, g'(2)=4. k(x)=f(x)/g(x). Find h'(2)/k'(2)", choices: ["-175/17", "-17/25", "163/17", "7"], ans: "-175/17"},
+    {q: "Find f''(x) of (ln x)/eˣ", choices: ["(-1-2x+x²lnx)/(x²eˣ)", "(1+2x-x²lnx)/(x²eˣ)", "(1-2x-x²lnx)/(x²eˣ)", "(-1+2x+x²lnx)/(x²eˣ)"], ans: "(-1-2x+x²lnx)/(x²eˣ)"},
+    {q: "f differentiable, f(0)=2, |f'(x)|≤3 for all x. Which is true?", choices: ["-13≤f(5)≤17", "f(5)=17", "f(5)≤17", "|f(5)|≤15"], ans: "-13≤f(5)≤17"}
+  ],
+  3: [
+    // Easy/Medium questions - implicit differentiation, related rates, optimization
+    {q: "Given x² + xy + y² = 7, find dy/dx at the point (1,2)", choices: ["-4/5", "-5/4", "-3/4", "-1"], ans: "-4/5"},
+    {q: "If x³ + y³ = 6xy, find dy/dx", choices: ["(6y-3x²)/(3y²-6x)", "(3x²-6y)/(6x-3y²)", "(6x-3y²)/(3x²-6y)", "(3y²-6x)/(6y-3x²)"], ans: "(6y-3x²)/(3y²-6x)"},
+    {q: "y = sin⁻¹(2x). Find dy/dx", choices: ["2/√(1-4x²)", "1/√(1-4x²)", "2/√(1-2x²)", "1/√(1-x²)"], ans: "2/√(1-4x²)"},
+    {q: "y = tan⁻¹(x²). Find dy/dx", choices: ["2x/(1+x⁴)", "1/(1+x²)", "2x/(1+x²)", "x/(1+x⁴)"], ans: "2x/(1+x⁴)"},
+    {q: "f(2) = 5 and f'(2) = 4, find (f⁻¹)'(5)", choices: ["1/4", "4", "1/5", "5"], ans: "1/4"},
+    {q: "Let f(x) = x³ + x. Find (f⁻¹)'(2)", choices: ["1/4", "1/13", "1/7", "1/10"], ans: "1/4"},
+    {q: "A spherical balloon's volume increases at 10 cm³/s. How fast is radius increasing when r=2?", choices: ["5/(8π)", "5/(16π)", "10/(16π)", "5/(4π)"], ans: "5/(8π)"},
+    {q: "A 10ft ladder slides down a wall. Bottom moves at 3 ft/s when 6ft from wall. How fast is top moving?", choices: ["9/4 ft/s", "9/2 ft/s", "18/4 ft/s", "12/5 ft/s"], ans: "9/4 ft/s"},
+    {q: "Find absolute maximum of f(x) = x³ - 3x² + 4 on [0,3]", choices: ["4", "2", "1", "0"], ans: "4"},
+    {q: "Find absolute minimum of f(x) = x + 4/x on [1,4]", choices: ["4", "3", "5", "2"], ans: "4"},
+    {q: "Use linearization for f(x) = ln x at x=1 to approximate ln(1.2)", choices: ["0.2", "0.18", "0.22", "0.25"], ans: "0.2"},
+    {q: "Use linearization to approximate √4.1 when y=√x at x=4", choices: ["2.025", "2.01", "2.05", "2.1"], ans: "2.025"},
+    {q: "If f'(x) = x(x-2), where is f increasing?", choices: ["(-∞,0)∪(2,∞)", "(0,2)", "(-∞,2)", "(2,∞)"], ans: "(-∞,0)∪(2,∞)"},
+    {q: "If f''(x) = 6x - 6, where is f concave down?", choices: ["x<1", "x>1", "x<0", "x>0"], ans: "x<1"},
+    // Hard questions - highlighted answers from images
+    {q: "Let y = y(x) be defined by ln(x+y) = xy². Which gives dy/dx?", choices: ["(y²(x+y)-1)/(1-2xy(x+y))", "(1+y²(x+y))/(2xy(x+y)+1)", "(y²(x+y)-1)/(2xy(x+y)-1)", "(1-y²(x+y))/(1-2xy(x+y))"], ans: "(y²(x+y)-1)/(1-2xy(x+y))"},
+    {q: "f(x) = arctan(x) - x/(1+x²). Find f'(x) in simplified form", choices: ["2x²/(1+x²)²", "-2x²/(1+x²)²", "2x/(1+x²)²", "0"], ans: "2x²/(1+x²)²"},
+    {q: "f and g are inverses. f concave up, f(2)=5, f'(2)=3. What's true about g near x=5?", choices: ["g concave down, g'(5)=1/3", "g concave up, g'(5)=1/3", "g concave up, g'(5)=3", "g concave down, g'(5)=3"], ans: "g concave down, g'(5)=1/3"},
+    {q: "g(x) = f(x²) where f(4)=7, f'(4)=-3, f''(4)=5. Linearization of g at x=2 gives g(2.1)≈", choices: ["5.8", "5.86", "6.7", "6.97"], ans: "5.8"},
+    {q: "f' positive on (-∞,-2), zero at x=-2, negative on (-2,0), zero at x=0, negative on (0,3), zero at x=3, positive on (3,∞). f'' positive on (-∞,0) and (2,∞), negative on (0,2). Which is true?", choices: ["Inflection at x=0,2; max at x=-2; min at x=3", "Inflection at x=0; max at x=-2; min at x=3", "Inflection at x=0,2; max at x=-2; no local extremum at x=0", "Inflection at x=0 only; f' at x=0 contradicts"], ans: "Inflection at x=0,2; max at x=-2; no local extremum at x=0"},
+    {q: "f(x) = (x³-x)/(x²-4). Complete list of asymptotes and holes?", choices: ["VA at x=±2; slant y=x; no holes", "VA at x=±2; HA y=1; no holes", "VA at x=±2; slant y=x; holes at x=±1", "VA at x=2 only; slant y=x; hole at x=-2"], ans: "VA at x=±2; slant y=x; no holes"},
+    {q: "f(x) = |x²-4x+3| on [0,4]. How many times does f achieve absolute max, and what is it?", choices: ["Twice; max value is 3", "Once; max value is 3", "Once; max value is 4", "Twice; max value is 4"], ans: "Twice; max value is 3"},
+    {q: "Street light 15ft high. 6ft person walks at 5 ft/s. Rate of shadow area increase when 10ft from light?", choices: ["20/3 ft²/sec", "4 ft²/sec", "10/3 ft²/sec", "6 ft²/sec"], ans: "20/3 ft²/sec"}
+  ],
+  4: [
+    // Easy questions - Integration, FTC
+    {q: "If f'(x) = (2x²+3x-1)/x, then f(x) = ?", choices: ["x² + 3x² - lnx + C", "x² + 3x - ln|x| + C", "x² + 3x² - 1/x + C", "2x + 3 - lnx + C"], ans: "x² + 3x - ln|x| + C"},
+    {q: "d/dx[∫₁ˣ √(1+t⁴) dt] = ?", choices: ["√(1+x⁴)", "3x²√(1+x¹²)", "x²√(1+x⁴)", "3x²√(1+x⁴)"], ans: "3x²√(1+x¹²)"},
+    {q: "If ∫₀⁴ f(x)dx = 6 and ∫₀⁴ g(x)dx = -2, what is ∫₄⁰ (2f(x) - g(x))dx?", choices: ["-14", "-10", "10", "14"], ans: "-10"},
+    {q: "Find the average value of f(x) = 1/x on [1, e²]", choices: ["1/2", "2/(e²-1)", "ln(e²)/(e²-1)", "2/e²"], ans: "ln(e²)/(e²-1)"},
+    {q: "∫xe^(x²) dx = ?", choices: ["e^(x²) + C", "(1/2)e^(x²) + C", "x²e^(x²) + C", "(1/2)xe^(x²) + C"], ans: "(1/2)e^(x²) + C"},
+    {q: "v(t) = t² - 2t - 3. Find total distance on [0,3]", choices: ["4", "6", "8", "10"], ans: "8"},
+    {q: "f(x) = ∫₀ˣ cos(t²)dt. Find f'(x)", choices: ["cos(x)", "cos(x²)", "-sin(x²)", "-sin(x)"], ans: "cos(x²)"},
+    {q: "∫ 1/√(1-4x²) dx = ?", choices: ["sin⁻¹(x) + C", "(1/2)sin⁻¹(2x) + C", "sin⁻¹(2x) + C", "tan⁻¹(2x) + C"], ans: "(1/2)sin⁻¹(2x) + C"},
+    {q: "f(x) = ∫₀^(x²) (t² - 1)dt. Where is f decreasing?", choices: ["x > 1", "x < 1", "-1 < x < 1", "x < -1"], ans: "-1 < x < 1"},
+    {q: "lim(n→∞) Σsin(i/n)(1/n) = ?", choices: ["∫₀¹ sinx dx", "∫₀ⁿ sinx dx", "∫₀¹ sin(nx)dx", "1"], ans: "∫₀¹ sinx dx"},
+    {q: "∫₋₂² (x³ + 4x) dx = ?", choices: ["0", "4", "-4", "8"], ans: "0"},
+    {q: "d/dx[∫ₓ^(x²) e^t dt] = ?", choices: ["e^(x²) - eˣ", "2xe^(x²) - eˣ", "e^(x²) + eˣ", "2xe^(x²) + eˣ"], ans: "2xe^(x²) - eˣ"},
+    {q: "∫₁² 2x/(x²+1) dx = ?", choices: ["ln(5/2)", "ln2", "ln3", "π/4"], ans: "ln(5/2)"},
+    {q: "If velocity < 0 and acceleration > 0, which is true?", choices: ["Speed increasing", "Speed decreasing", "Position constant", "Velocity increasing, speed increasing"], ans: "Speed decreasing"},
+    {q: "If f(x) > 0 and increasing, which is true about g(x) = ∫₀ˣ f(t)dt?", choices: ["g increasing and concave up", "g increasing and concave down", "g decreasing and concave up", "g decreasing and concave down"], ans: "g increasing and concave up"},
+    // Medium questions
+    {q: "Right Riemann sum with n=4 to approximate ∫₀² x² dx (Δx=0.5)", choices: ["3.75", "2.5", "1.5", "4.25"], ans: "3.75"},
+    {q: "F increasing, concave up on [a,b]. L=left, M=midpoint, T=trapezoid, R=right. Which is true?", choices: ["I, II, and III", "I and II only", "I only", "II and III only"], ans: "I, II, and III"},
+    {q: "True or False: ∫₋₂² x³ dx = 0", choices: ["True", "False", "Cannot determine", "Depends on bounds"], ans: "True"},
+    {q: "Find average value of f(x) = sin x on [0, π]", choices: ["2/π", "π/2", "1/π", "0"], ans: "2/π"},
+    {q: "Let g(x) = ∫₀ˣ (t² - 1)dt. Find g'(3)", choices: ["8", "9", "6", "3"], ans: "8"},
+    {q: "∫₀¹ x/(x² + 1) dx = ?", choices: ["(ln 2)/2", "ln 2", "1/2", "π/4"], ans: "(ln 2)/2"},
+    {q: "v(t) = t² - 4. Total distance from t = 0 to t = 3?", choices: ["19/3", "3", "9", "7"], ans: "19/3"},
+    {q: "Water flows at r(t) = 2t gal/min. If 10 gal at t=0, how many at t=3?", choices: ["19", "16", "10", "28"], ans: "19"},
+    {q: "For concave down function on [a,b], trapezoid rule:", choices: ["Underestimates the integral", "Overestimates the integral", "Gives exact value", "May over- or underestimate"], ans: "Underestimates the integral"},
+    {q: "s(0) = 5, v(t) = 2t - 6. Find s(4)", choices: ["-3", "5", "1", "9"], ans: "-3"},
+    // Hard questions
+    {q: "∫ x·sin(x²) dx = ?", choices: ["-(1/2)cos(x²) + C", "-cos(x²) + C", "(1/2)sin(x²) + C", "cos(x²) + C"], ans: "-(1/2)cos(x²) + C"},
+    {q: "∫₀^(π/4) tan x dx = ?", choices: ["(1/2)ln 2", "ln 2", "-(1/2)ln 2", "π/4"], ans: "(1/2)ln 2"},
+    {q: "a(t) = 6t - 4, v(0) = 2, s(0) = -1. Find s(2)", choices: ["3", "1", "-1", "5"], ans: "3"},
+    {q: "Oil leaks at r(t) = 5/(1+t²) gal/hr. Total leaked from t=0 to t=∞?", choices: ["5π/2", "5", "∞", "5π"], ans: "5π/2"},
+    {q: "F(x) = x⁴ on [0,1]. Trapezoid error bound M(b-a)³/(12n²), M=max|f''|. With n=10:", choices: ["1/100", "1/50", "1/200", "1/10"], ans: "1/100"},
+    {q: "Which condition for particle slowing down?", choices: ["v(t) and a(t) have opposite signs", "a(t) < 0", "v(t) < 0", "a(t) > 0"], ans: "v(t) and a(t) have opposite signs"},
+    {q: "Which are true? I: ∫c·f(x)dx = c∫f(x)dx. II: ∫f(x)g(x)dx = (∫f dx)(∫g dx). III: If f even, ∫₋ₐᵃ f(x)dx = 2∫₀ᵃ f(x)dx", choices: ["I and III only", "I, II, and III", "I only", "II and III only"], ans: "I and III only"}
+  ],
+  5: [
+    // Differential Equations - Easy
+    {q: "Which is the solution to dy/dx = 2y with y(0) = 3?", choices: ["y = 3e^(2x)", "y = 2e^(3x)", "y = 6e^x", "y = 3 + 2x"], ans: "y = 3e^(2x)"},
+    {q: "True or False: y = sin(x) + cos(x) is a solution to y'' + y = 0", choices: ["True", "False", "Only for x > 0", "Cannot determine"], ans: "True"},
+    {q: "dy/dx = y - x². I: slope at (0,2) is 2. II: Euler from (0,1) with h>0 gives y₁>1. III: y=x² is equilibrium. Which are true?", choices: ["I only", "I and II only", "I, II, and III", "II only"], ans: "I and II only"},
+    {q: "Euler's method: h=0.5, y(0)=1, dy/dx=x+y. Find y(1)", choices: ["2.5", "3.0", "2.25", "3.5"], ans: "2.5"},
+    {q: "True or False: dy/dx = x/y has horizontal tangents along x=0 and vertical along y=0", choices: ["True", "False", "Only horizontal", "Only vertical"], ans: "True"},
+    {q: "General solution to dy/dx = 3x²y?", choices: ["y = Ce^(x³)", "y = Ce^(3x)", "y = x³ + C", "y = Ce^(x²)"], ans: "y = Ce^(x³)"},
+    {q: "dy/dx = y²sin(x). Which are true? I: separable. II: general solution involves -1/y. III: y=0 is singular solution", choices: ["I only", "I and II only", "I, II, and III", "II and III only"], ans: "I, II, and III"},
+    {q: "Solve dy/dx = y/x with y(1) = 4. What is y(e)?", choices: ["4e", "4", "e⁴", "4/e"], ans: "4e"},
+    {q: "True or False: dy/dx = x + y is separable", choices: ["True", "False", "Only if y=0", "Depends on initial condition"], ans: "False"},
+    {q: "If dy/dx = -y and y(0) = 5, what is y(2)?", choices: ["5e^(-2)", "5e²", "-5e²", "5/2"], ans: "5e^(-2)"},
+    // Exponential Growth/Decay - Medium
+    {q: "Population doubles every 6 years. If P(0) = 200, what is P(18)?", choices: ["1600", "1200", "800", "400"], ans: "1600"},
+    {q: "True or False: If dP/dt = kP with k < 0, population reaches zero at finite time", choices: ["True", "False", "Only if P(0) > 0", "Depends on k"], ans: "False"},
+    {q: "A(t) = 100e^(-0.05t). Which are true? I: half-life ≈ 13.86. II: A'(t) = -5e^(-0.05t). III: A = 0 after t = 200", choices: ["I and II only", "I only", "II and III only", "I, II, and III"], ans: "I and II only"},
+    {q: "$1000 grows continuously at 5%/year. Value after 10 years?", choices: ["1000e^(0.5)", "1000e^(5)", "1000(1.05)^10", "1500"], ans: "1000e^(0.5)"},
+    {q: "Carbon-14 half-life 5730 years. Percent remaining after 2865 years?", choices: ["70.7%", "50%", "25%", "86%"], ans: "70.7%"},
+    // Area and Volume - Medium/Hard
+    {q: "Area enclosed by y = x² and y = x?", choices: ["1/6", "1/3", "1/2", "1/4"], ans: "1/6"},
+    {q: "True or False: Area between y = sin(x) and x-axis from 0 to 2π equals zero", choices: ["True", "False", "Equals 2", "Equals 4"], ans: "False"},
+    {q: "Area between f(x) = 4 - x² and g(x) = x + 2?", choices: ["9/2", "7/3", "4", "6"], ans: "9/2"},
+    {q: "Base bounded by y=x and y=0 from x=0 to x=4. Cross-sections are squares. Volume?", choices: ["64/3", "8", "16", "32"], ans: "64/3"},
+    {q: "True or False: Cross-sections perpendicular to x-axis are equilateral triangles with side b(x), then A(x) = (√3/4)[b(x)]²", choices: ["True", "False", "A(x) = b(x)²", "A(x) = (1/2)b(x)²"], ans: "True"},
+    {q: "Circular base x² + y² = 4. Cross-sections perpendicular to x-axis are squares. Volume?", choices: ["128/3", "32/3", "64/3", "16π"], ans: "128/3"},
+    {q: "y = √x, x = 0, x = 9, y = 0 rotated about x-axis. Volume?", choices: ["81π/2", "9π", "27π", "81π"], ans: "81π/2"},
+    {q: "y = 2x, x = 0, x = 3, y = 0 rotated about x-axis. Volume?", choices: ["36π", "12π", "18π", "72π"], ans: "36π"},
+    {q: "Region between y = x and y = x² (0 ≤ x ≤ 1) rotated about x-axis. Volume?", choices: ["2π/15", "π/6", "π/15", "π/3"], ans: "2π/15"},
+    {q: "y = x² and y = 4 rotated about y = 4. Volume?", choices: ["512π/15", "64π/5", "128π/5", "32π/3"], ans: "512π/15"},
+    {q: "Revolving about y-axis using washers. Which are true? I: V = π∫[R² - r²]dy. II: Horizontal slices. III: For x=y and x=y², V = π∫(y² - y⁴)dy", choices: ["I and II only", "I, II, and III", "II only", "III only"], ans: "I, II, and III"},
+    {q: "Solution to dy/dx = y^(1/2) with y(0) = 4?", choices: ["y = (x/2 + 2)²", "y = (x + 2)²", "y = 4e^x", "y = x² + 4"], ans: "y = (x/2 + 2)²"},
+    {q: "Particular solution to dy/dx = 3x²/e^y with y(0) = 0?", choices: ["y = ln(x³+1)", "y = x³", "y = e^(x³)-1", "y = 3x²"], ans: "y = ln(x³+1)"}
+  ],
+  6: [
+    // Easy - Integration techniques, arc length
+    {q: "∫ 3/(x²-9) dx = ?", choices: ["(1/2)ln|(x-3)/(x+3)| + C", "(1/6)ln|(x-3)/(x+3)| + C", "ln|x² - 9| + C", "(1/2)ln|x² - 9| + C"], ans: "(1/2)ln|(x-3)/(x+3)| + C"},
+    {q: "∫ xe^x dx = ?", choices: ["e^x(x-1) + C", "e^x(x+1) + C", "xe^x + C", "e^x - x + C"], ans: "e^x(x-1) + C"},
+    {q: "∫ e^x cos(x) dx = ?", choices: ["e^x(sin(x) + cos(x)) + C", "(1/2)e^x(sin(x) + cos(x)) + C", "(1/2)e^x(sin(x) - cos(x)) + C", "e^x(sin(x) - cos(x)) + C"], ans: "(1/2)e^x(sin(x) + cos(x)) + C"},
+    {q: "∫₀^∞ (1/x²) dx = ?", choices: ["Diverges", "1", "0", "∞"], ans: "Diverges"},
+    {q: "∫₀¹ ln(x) dx = ?", choices: ["Diverges", "-1", "0", "1"], ans: "-1"},
+    {q: "If dy/dx = 2x, y(0) = 1, what is y(1) with step size h = 1?", choices: ["1", "2", "3", "0"], ans: "1"},
+    {q: "lim(x→0) (1+3x)^(1/x) = ?", choices: ["e", "3e", "e³", "e^(1/3)"], ans: "e³"},
+    {q: "lim(x→0⁺) x·ln(x) = ?", choices: ["-∞", "0", "1", "DNE"], ans: "0"},
+    {q: "What is the arc length formula?", choices: ["∫√(1 + (f'(x))²) dx", "∫√(1 + (f(x))²) dx", "∫(1 + f'(x)) dx", "∫|f'(x)| dx"], ans: "∫√(1 + (f'(x))²) dx"},
+    {q: "Arc length of y = (2/3)x^(3/2) on [0,4]?", choices: ["16/3", "32/3", "8", "(10√5-2)/3"], ans: "(10√5-2)/3"},
+    // Medium - Logistic, carrying capacity
+    {q: "dP/dt = kP(1 - P/K), the carrying capacity is:", choices: ["k", "P", "K", "kP"], ans: "K"},
+    {q: "At what point is logistic growth rate maximum?", choices: ["P = 0", "P = K", "P = K/2", "2K"], ans: "P = K/2"},
+    {q: "∫ ln(x) dx = ?", choices: ["x·ln(x) - x + C", "ln(x) + C", "x·ln(x) + C", "ln(x)/x + C"], ans: "x·ln(x) - x + C"},
+    {q: "∫₁^∞ (1/x) dx = ?", choices: ["Converges to 1", "Converges to 0", "Diverges", "Converges to ln x"], ans: "Diverges"},
+    // Hard - Partial fractions, integration by parts, improper integrals
+    {q: "∫ (2x²-x+4)/(x³+4x) dx = ?", choices: ["ln|x| + (1/2)ln(x²+4) - (1/2)arctan(x/2) + C", "ln|x| + (1/2)ln(x²+4) - (1/8)arctan(x/2) + C", "ln|x| + (1/8)ln(x²+4) + arctan(x/2) + C", "2ln|x| - ln(x²+4) + arctan(x/2) + C"], ans: "ln|x| + (1/2)ln(x²+4) - (1/2)arctan(x/2) + C"},
+    {q: "∫₀¹ f''(x)e^x dx given f'(0)=2, f'(1)=5, f(0)=1, f(1)=3?", choices: ["5e - 2 - (3e-1)", "5e - 2 + (3e-1)", "3e - 1 - (5e-2)", "3e - 1 + (5e-2)"], ans: "5e - 2 - (3e-1)"},
+    {q: "lim(x→0⁺) (tan(x))^(sin(x)) = ?", choices: ["0", "1", "e", "DNE"], ans: "1"},
+    {q: "∫₀^∞ e^(-x)cos(x) dx = ?", choices: ["1/2", "0", "1", "Diverges"], ans: "1/2"},
+    {q: "∫₀¹ x^p dx converges for what values of p?", choices: ["p > -1", "p > 0", "p > 1", "All real values"], ans: "p > -1"},
+    {q: "Euler's method: dy/dx = y - x² with y(1) = 2, two steps to y(2)?", choices: ["3.25", "2.625", "3", "4.5"], ans: "2.625"},
+    {q: "Arc length of y = x^(3/2) from x=0 to x=4 is given by which integral?", choices: ["∫₀⁴ √(1 + 9x/4) dx", "∫₀⁴ √(1 + 3x/2) dx", "∫₀⁴ (1 + 3√x/2) dx", "∫₀⁴ √(1 - 9x/4) dx"], ans: "∫₀⁴ √(1 + 9x/4) dx"},
+    {q: "Logistic: dP/dt = (1/2)P(1 - P/1200). When is growth fastest?", choices: ["P = 400", "P = 600", "P = 1200", "t = 0"], ans: "P = 600"},
+    {q: "lim(x→0) (1/sin(x) - 1/x) = ?", choices: ["1", "1/6", "0", "∞"], ans: "0"},
+    {q: "Partial fractions: (6x²+5x-2)/(x³+x²-2x) = A/x + B/(x-1) + C/(x+2). Find B.", choices: ["8/3", "3", "-1", "8"], ans: "8/3"},
+    {q: "dP/dt = 0.1P(1 - P/500), P(0)=50. Second population Q(0)=600>K. Which is true?", choices: ["P→500; Q→500, dQ/dt<0", "P→500; Q→∞, dQ/dt>0", "Both→500, dQ/dt>0", "P→500; Q→0, dQ/dt<0"], ans: "P→500; Q→500, dQ/dt<0"},
+    {q: "lim(x→∞) (x - x²·ln(1 + 1/x)) = ?", choices: ["0", "-∞", "1/2", "-1/2"], ans: "1/2"},
+    {q: "∫₀³ f(x)g''(x)dx = 10, f(3)g'(3)=7, f(0)g'(0)=1, f'(3)g(3)=4, f'(0)g(0)=2. Find ∫₀³ f''(x)g(x)dx", choices: ["6", "-6", "2", "14"], ans: "6"}
+  ],
+  7: [
+    // Parametric Equations - Easy
+    {q: "If x(t) = 4t² + 1 and y(t) = t + 3, find position at t = 3", choices: ["(37, 6)", "(13, 6)", "(37, 12)", "(10, 6)"], ans: "(37, 6)"},
+    {q: "x(t) = 3t - 1, y(t) = t² + 2. What is y when x = 5?", choices: ["6", "8", "11", "14"], ans: "11"},
+    {q: "True or False: x = cos(t), y = sin(t) traces a circle of radius 1 counterclockwise from 0 to 2π", choices: ["True", "False", "Only clockwise", "Only semicircle"], ans: "True"},
+    {q: "If x = t² and y = 2t, then dy/dx = ?", choices: ["2t", "1/t", "2/t", "t/2"], ans: "1/t"},
+    {q: "For x = t³ - 3t and y = t² - 1, horizontal tangent when:", choices: ["t = 0 only", "t = ±1 only", "t = 0 and t = ±1", "t = ±√3"], ans: "t = 0 only"},
+    {q: "x = eᵗ, y = teᵗ. Which are true? I: dy/dx = 1+t. II: No vertical tangents. III: d²y/dx² = e⁻ᵗ", choices: ["I only", "I and II only", "I and III only", "I, II, and III"], ans: "I, II, and III"},
+    {q: "True or False: d²y/dx² for parametric = (d²y/dt²)/(d²x/dt²)", choices: ["True", "False", "Only when dx/dt ≠ 0", "Only for linear"], ans: "False"},
+    {q: "x(t) = t³ - 6t, y(t) = t² - 3. At t = 2, which are true? I: moving right. II: moving up. III: speed > 4", choices: ["II only", "I and III only", "II and III only", "I, II, and III"], ans: "I, II, and III"},
+    // Polar Coordinates - Medium
+    {q: "The polar curve r = 3 is:", choices: ["A line through origin", "Circle radius 3 at origin", "Circle radius 3 at (3,0)", "A spiral"], ans: "Circle radius 3 at origin"},
+    {q: "True or False: r = 2cos(θ) is a circle of radius 1 centered at (1, 0)", choices: ["True", "False", "Radius 2 at origin", "Radius 1 at origin"], ans: "True"},
+    {q: "The rose curve r = cos(2θ) has how many petals?", choices: ["2", "3", "4", "8"], ans: "4"},
+    {q: "Which polar curve is a limaçon with inner loop?", choices: ["r = 1 + 2cos(θ)", "r = 1 + cos(θ)", "r = 2 + cos(θ)", "r = cos(θ)"], ans: "r = 1 + 2cos(θ)"},
+    {q: "True or False: r = sin(θ) and r = cos(θ) intersect at exactly two points", choices: ["True", "False", "Three points", "One point"], ans: "True"},
+    {q: "How many times does r = sin(3θ) equal zero on [0, 2π)?", choices: ["3", "6", "3π", "Never"], ans: "6"},
+    {q: "Which converts r = 4sin(θ) to rectangular form?", choices: ["x² + y² = 4y", "x² + (y-2)² = 4", "x² + y² = 4x", "(x-2)² + y² = 4"], ans: "x² + (y-2)² = 4"},
+    {q: "For r = f(θ), slope of tangent dy/dx = ?", choices: ["dr/dθ", "(f'(θ)sinθ + f(θ)cosθ)/(f'(θ)cosθ - f(θ)sinθ)", "f'(θ)/f(θ)", "f(θ)/f'(θ)"], ans: "(f'(θ)sinθ + f(θ)cosθ)/(f'(θ)cosθ - f(θ)sinθ)"},
+    {q: "True or False: When r = 0 and dr/dθ ≠ 0, tangent passes through origin", choices: ["True", "False", "Only if θ = 0", "Never"], ans: "True"},
+    {q: "For r = 4, find dy/dx at θ = π/4", choices: ["1", "-1", "0", "Undefined"], ans: "-1"},
+    {q: "For r = 1 + cos(θ), find slope of tangent at θ = π/2", choices: ["1", "-1", "0", "Undefined"], ans: "1"},
+    {q: "For r = cos(2θ), slope at tip of petal θ = 0?", choices: ["0", "Undefined", "1", "-2"], ans: "Undefined"},
+    {q: "True or False: If r = f(θ) has horizontal tangent at θ = α, then dy/dθ = 0 at θ = α", choices: ["True", "False", "Only if r ≠ 0", "Only if dr/dθ = 0"], ans: "True"},
+    {q: "Area formula for polar curve r = f(θ) from α to β:", choices: ["∫f(θ)dθ", "(1/2)∫[f(θ)]²dθ", "π∫[f(θ)]²dθ", "∫[f(θ)]²dθ"], ans: "(1/2)∫[f(θ)]²dθ"},
+    {q: "Area enclosed by r = 3?", choices: ["3π", "6π", "9π", "18π"], ans: "9π"},
+    {q: "True or False: Area of one petal of r = sin(2θ) is π/8", choices: ["True", "False", "π/4", "π/2"], ans: "True"},
+    {q: "Area of one petal of r = cos(3θ)?", choices: ["π/4", "π/6", "π/12", "π/3"], ans: "π/12"},
+    // Hard - Polar areas, parametric calculus
+    {q: "For r = 2cos(θ), which give total area of circle? I: (1/2)∫₀^π(2cosθ)²dθ. II: (1/2)∫₀^(2π)(2cosθ)²dθ÷2. III: π(1)²=π", choices: ["I only", "I and III only", "II and III only", "I, II, and III"], ans: "I, II, and III"},
+    {q: "Area inside r = 3sin(θ) and outside r = sin(θ)?", choices: ["π", "2π", "3π", "4π"], ans: "2π"},
+    {q: "Area between r = f(θ) outer and r = g(θ) inner from α to β:", choices: ["(1/2)∫[f(θ)-g(θ)]dθ", "(1/2)∫[f(θ)²-g(θ)²]dθ", "∫[f(θ)²-g(θ)²]dθ", "(1/2)∫[f(θ)+g(θ)]²dθ"], ans: "(1/2)∫[f(θ)²-g(θ)²]dθ"},
+    {q: "True or False: Area inside r = sin(θ) equals area inside r = cos(θ)", choices: ["True", "False", "Only on [0,π]", "Double"], ans: "True"},
+    {q: "True or False: x = t², y = t³ is concave up for t > 0 and concave down for t < 0", choices: ["True", "False", "Always concave up", "Always concave down"], ans: "True"},
+    {q: "For x = t - sin(t), y = 1 - cos(t) (cycloid), find d²y/dx² at t = π/2", choices: ["-1/2", "-1", "1/2", "-2"], ans: "-1"},
+    {q: "True or False: r = 2sec(θ) converts to x = 2", choices: ["True", "False", "y = 2", "x² + y² = 4"], ans: "True"},
+    {q: "True or False: r = 2sin(θ) and r = 2cos(θ) are both circles of radius 1, centers √2 apart", choices: ["True", "False", "Centers 2 apart", "Same center"], ans: "True"},
+    {q: "Area of region enclosed by r = √(cos(2θ)) (one loop of lemniscate)?", choices: ["1/2", "1", "π/4", "√2/2"], ans: "1/2"},
+    {q: "Area inside r = sin(θ) + cos(θ) but outside r = 1?", choices: ["π/4", "(π-2)/4", "1/2", "π/2 - 1"], ans: "1/2"}
+  ],
+  8: [
+    // Series - nth term test, convergence/divergence
+    {q: "Σ(3n+1)/(2n+2): Converges, Diverges, or Inconclusive by nth term?", choices: ["Diverges (limit = 3/2)", "Converges", "Inconclusive (limit = 0)", "Diverges (limit = 0)"], ans: "Diverges (limit = 3/2)"},
+    {q: "Σ(3n²+13x+2)/(2n): Converges, Diverges, or Inconclusive?", choices: ["Diverges (limit = ∞)", "Converges", "Inconclusive", "Diverges (limit = 0)"], ans: "Diverges (limit = ∞)"},
+    {q: "Σ(2n+9)/(2n²): Converges, Diverges, or Inconclusive by nth term?", choices: ["Diverges", "Converges", "Inconclusive (limit = 0)", "Cannot determine"], ans: "Inconclusive (limit = 0)"},
+    {q: "Σ(n+16)(n²+1)/[(n+2)(n+3)(n+4)]: nth term test result?", choices: ["Diverges (limit = 1)", "Converges", "Inconclusive", "Diverges (limit = 0)"], ans: "Diverges (limit = 1)"},
+    {q: "Σ(3ⁿ/n): Converges, Diverges, or Inconclusive?", choices: ["Diverges (limit = ∞)", "Converges", "Inconclusive", "Diverges (limit = 1)"], ans: "Diverges (limit = ∞)"},
+    {q: "Σ(√(3n+1)/n): Converges, Diverges, or Inconclusive by nth term?", choices: ["Diverges", "Converges", "Inconclusive (limit = 0)", "Cannot determine"], ans: "Inconclusive (limit = 0)"},
+    {q: "Σ(n/(n+1))ⁿ: nth term test result?", choices: ["Diverges (limit = 1/e)", "Converges", "Inconclusive", "Diverges (limit = 1)"], ans: "Diverges (limit = 1/e)"},
+    {q: "True or False: Σ(-1)ⁿ diverges by nth term test", choices: ["True", "False", "Converges", "Inconclusive"], ans: "True"},
+    {q: "nth term test applies to which? I: Σsin(2n). II: Σ3(5/4)ⁿ. III: Σln((n-1)/n)", choices: ["I and II only", "II only", "I, II, and III", "None"], ans: "I and II only"},
+    {q: "Which converge? I: Σ(√(n+4))/(n+4). II: Σ3^(n+4). III: Σn²", choices: ["None of the above", "I only", "II only", "All converge"], ans: "None of the above"},
+    {q: "Σaₙ = Σn/(n+sin(n)). I: lim aₙ=1. II: Series diverges. III: Series converges. Which true?", choices: ["I and II only", "I only", "III only", "I, II, and III"], ans: "I and II only"},
+    {q: "Find sum of Σ(6^(-n+2))(2ⁿ) or say diverges", choices: ["18", "Diverges", "36", "6"], ans: "18"},
+    // Geometric series, ratio test
+    {q: "Find sum of Σ(1)ⁿ or say diverges", choices: ["Diverges (r=1)", "1", "0", "∞"], ans: "Diverges (r=1)"},
+    {q: "Find sum of Σ(-1/2)^(n+1) or say diverges", choices: ["1/6", "Diverges", "-1/3", "1/4"], ans: "1/6"},
+    {q: "Find sum of Σ(2/16ⁿ) or say diverges", choices: ["2/15", "Diverges", "1/8", "2/17"], ans: "2/15"},
+    {q: "Find sum of Σ(-1)ⁿπ/eⁿ or say diverges", choices: ["-π/[e(e+1)]", "Diverges", "π/(e+1)", "-π/e"], ans: "-π/[e(e+1)]"},
+    {q: "Find sum of Σ3^(2+n)·2^(1-3n) or say diverges", choices: ["54/5", "Diverges", "18", "27/4"], ans: "54/5"},
+    {q: "Σn!/nⁿ: Converges or diverges by ratio test?", choices: ["Converges (L=1/e<1)", "Diverges", "Inconclusive", "Converges (L=0)"], ans: "Converges (L=1/e<1)"},
+    {q: "True or False: Ratio test is most effective for factorials/exponentials", choices: ["True", "False", "Only for factorials", "Only for exponentials"], ans: "True"},
+    {q: "Σ1/n!: Ratio test result?", choices: ["Converges", "Diverges", "Inconclusive", "Neither"], ans: "Converges"},
+    {q: "Σn²·2ⁿ: Ratio test result?", choices: ["Converges (L=1/2)", "Diverges", "Inconclusive", "Converges (L=2)"], ans: "Converges (L=1/2)"},
+    // Alternating series, comparison tests
+    {q: "Σ(-1)ⁿ/n: Converges or diverges by AST?", choices: ["Converges by AST", "Diverges", "Inconclusive", "Absolutely converges"], ans: "Converges by AST"},
+    {q: "True or False: If Σ(-1)ⁿaₙ converges by AST, it converges absolutely", choices: ["True", "False", "Only if aₙ→0", "Sometimes"], ans: "False"},
+    {q: "Error in using S₄ to approximate Σ(-1)ⁿ/n! from n=0?", choices: ["≈0.0083 (≤1/120)", "0", "≈0.05", "≈0.01"], ans: "≈0.0083 (≤1/120)"},
+    {q: "Which are p-series? I: Σ1/n⁴. II: Σeⁿ/nⁿ. III: Σn⁻⁴", choices: ["I and III only", "I only", "All three", "None"], ans: "I and III only"},
+    {q: "True or False: Σ1/(n·ln(n)) is a p-series with p=1 and diverges", choices: ["True", "False (not a p-series)", "True (converges)", "False (converges)"], ans: "False (not a p-series)"},
+    {q: "Compare Σ1/n² and Σ1/n³: which has larger sum?", choices: ["Σ1/n²", "Σ1/n³", "Equal", "Both diverge"], ans: "Σ1/n²"},
+    {q: "Σ1/(n²+sin²n): Use DCT, compare to?", choices: ["1/n² (converges)", "1/n (diverges)", "1/n³", "sin²n/n²"], ans: "1/n² (converges)"},
+    {q: "Σ1/√(n-1) for n≥2: LCT result?", choices: ["Diverges (compare 1/√n)", "Converges", "Inconclusive", "Compare to 1/n"], ans: "Diverges (compare 1/√n)"},
+    {q: "Σ(2ⁿ+3)/(5ⁿ-1): DCT or LCT result?", choices: ["Converges (compare (2/5)ⁿ)", "Diverges", "Inconclusive", "Compare to 1/5ⁿ"], ans: "Converges (compare (2/5)ⁿ)"},
+    {q: "True or False: LCT requires both series have positive terms", choices: ["True", "False", "Only one positive", "Neither positive"], ans: "True"},
+    {q: "True or False: If 0<aₙ≤bₙ and Σaₙ diverges, then Σbₙ diverges", choices: ["True", "False", "Only if bₙ→0", "Inconclusive"], ans: "True"},
+    {q: "DCT conditions required? I: aₙ,bₙ>0. II: aₙ≤bₙ or aₙ≥bₙ. III: lim(aₙ/bₙ) finite", choices: ["I and II only", "I, II, and III", "III only", "I only"], ans: "I and II only"},
+    // Integral test
+    {q: "Integral test guarantees: I: exact sum. II: convergence/divergence. III: tail error bound", choices: ["II and III only", "I only", "I, II, and III", "II only"], ans: "II and III only"},
+    {q: "Σ1/(n²+1): Integral test result?", choices: ["Converges (∫=π/4)", "Diverges", "Inconclusive", "Converges (∫=π/2)"], ans: "Converges (∫=π/4)"},
+    {q: "Σ1/(n·ln(n)) for n≥2: Integral test?", choices: ["Diverges", "Converges", "Inconclusive", "Converges to ln(2)"], ans: "Diverges"},
+    {q: "True or False: Integral test gives exact value of convergent series", choices: ["True", "False", "Only for p-series", "Sometimes"], ans: "False"},
+    {q: "For integral test, f must be:", choices: ["Positive, continuous, decreasing", "Just positive", "Just continuous", "Just decreasing"], ans: "Positive, continuous, decreasing"},
+    {q: "True or False: If ∫f(x)dx = S, then Σf(n) = S", choices: ["True", "False", "Only if f decreasing", "Approximately"], ans: "False"},
+    {q: "Σ1/(n(ln n)²) for n≥2: converge or diverge?", choices: ["Converges", "Diverges", "Inconclusive", "Neither"], ans: "Converges"},
+    {q: "Min terms for Σ1/n³ from n=2 with error < 0.01?", choices: ["8", "10", "5", "100"], ans: "8"},
+    // Absolute/conditional convergence
+    {q: "Σ(-1)ⁿ/n²: absolute, conditional, or divergent?", choices: ["Absolutely convergent", "Conditionally convergent", "Divergent", "Neither"], ans: "Absolutely convergent"},
+    {q: "Σ(-1)ⁿ/n: absolute, conditional, or divergent?", choices: ["Absolutely convergent", "Conditionally convergent", "Divergent", "Neither"], ans: "Conditionally convergent"},
+    {q: "True or False: Absolute convergence implies conditional convergence", choices: ["True", "False", "Only for alternating", "Sometimes"], ans: "True"},
+    {q: "Which converge absolutely? I: Σ(-1)ⁿ/n³. II: Σ(-1)ⁿ/√n. III: Σ(-1)ⁿ", choices: ["I only", "I and II", "All three", "None"], ans: "I only"},
+    // Taylor/Maclaurin series
+    {q: "Maclaurin series for eˣ?", choices: ["Σxⁿ/n!", "Σxⁿ", "Σ(-1)ⁿxⁿ/n!", "Σnxⁿ"], ans: "Σxⁿ/n!"},
+    {q: "Series for sin(x)/x using Maclaurin of sin(x)?", choices: ["1 - x²/6 + x⁴/120 - ...", "x - x³/6 + ...", "1 + x²/2 + ...", "x + x³/6 + ..."], ans: "1 - x²/6 + x⁴/120 - ..."},
+    {q: "True or False: Maclaurin series for cos(x) has only even-degree terms", choices: ["True", "False", "Only odd terms", "Both even and odd"], ans: "True"},
+    {q: "4th-degree Taylor polynomial for ln(x) centered at a=1?", choices: ["(x-1) - (x-1)²/2 + (x-1)³/3 - (x-1)⁴/4", "(x-1) + (x-1)²/2 + ...", "ln(1) + x - x²/2 + ...", "x - x²/2 + x³/3 - x⁴/4"], ans: "(x-1) - (x-1)²/2 + (x-1)³/3 - (x-1)⁴/4"},
+    {q: "Estimate e^0.1 using first 3 Maclaurin terms. Error bound?", choices: ["≈1.105, error≤0.000333", "≈1.1, error≤0.01", "≈1.105, error≤0.001", "≈1.11, error≤0.005"], ans: "≈1.105, error≤0.000333"},
+    {q: "True or False: Maclaurin series for |x| converges to |x| for all x", choices: ["True", "False (not differentiable at 0)", "Only for x>0", "Only for |x|<1"], ans: "False (not differentiable at 0)"},
+    {q: "Which Maclaurin series correct? I: eˣ=Σxⁿ/n!. II: sin(x)=Σ(-1)ⁿx^(2n)/(2n)!. III: cos(x)=Σ(-1)ⁿx^(2n+1)/(2n+1)!", choices: ["I only", "I and II", "I, II, and III", "None"], ans: "I only"},
+    {q: "Coefficient of x⁴ in Maclaurin series for e^(x²)?", choices: ["1/2", "1/4", "1", "1/24"], ans: "1/2"},
+    {q: "True or False: Taylor series at a converges to f(x) for all x in interval of convergence", choices: ["True", "False", "Only at center", "Sometimes"], ans: "True"},
+    {q: "True or False: Lagrange error bound is an upper bound, not exact error", choices: ["True", "False", "It's exact", "It's a lower bound"], ans: "True"},
+    {q: "True or False: AST applies to Σ(-1)ⁿ/(n²-n!)", choices: ["True", "False", "Only for large n", "Inconclusive"], ans: "True"},
+    {q: "Lagrange error for P₂(x)=e^(3x) at f(0.2)?", choices: ["≈0.0667", "≈0.02", "≈0.1", "≈0.005"], ans: "≈0.0667"},
+    {q: "True or False: Degree-5 Maclaurin for sin(x) has error ≤(0.4)⁶/720 at x=0.4", choices: ["True", "False", "Error is larger", "Error is (0.4)⁵/120"], ans: "True"},
+    {q: "True or False: For f(x)=eˣ at a=0, use M=e for Lagrange bound on [0,1]", choices: ["True", "False", "Use M=1", "Use M=e²"], ans: "True"}
+  ]
+};
+
+// ==================== GAME DATA ====================
+const CLASSES = {
+  warrior:{name:'Warrior',icon:'⚔️',baseHp:35,baseStr:3,baseFth:0,baseInt:0,
+    color:'tag-warrior',desc:'High HP and powerful melee attacks. Enrage at your peril.',
+    moves:[
+      {id:'slash',name:'Slash',baseDmg:7,effect:null,cooldown:0,maxCd:0,type:'atk',desc:'7 dmg, no cooldown'},
+      {id:'lunge',name:'Lunge',baseDmg:9,effect:null,cooldown:0,maxCd:3,type:'atk',desc:'9 dmg, 3-turn CD'},
+      {id:'stab',name:'Stab',baseDmg:7,effect:'bleed',cooldown:0,maxCd:3,type:'atk',desc:'7 dmg + bleed, 3-turn CD'},
+      {id:'enrage',name:'Enrage',baseDmg:0,effect:'enrage',cooldown:0,maxCd:0,type:'buff',desc:'+35% dmg, +20% dmg taken (3 turns)'}
+    ],
+    weapon:{id:'simple_sword',name:'Simple Sword',dmgBonus:0,dmgPct:0}
+  },
+  priest:{name:'Priest',icon:'✨',baseHp:30,baseStr:0,baseFth:3,baseInt:0,
+    color:'tag-priest',desc:'Healer and debuffer. Sustain through faith.',
+    moves:[
+      {id:'pray',name:'Pray',baseDmg:0,effect:'heal15',cooldown:0,maxCd:2,type:'heal',desc:'Heal 15% HP, 2-turn CD'},
+      {id:'holy_gift',name:'Holy Gift',baseDmg:0,effect:'holy_gift',cooldown:0,maxCd:4,type:'buff',desc:'5% heal + 10% dmg reduction 3 turns, 4-turn CD'},
+      {id:'poison_powder',name:'Poison Powder',baseDmg:0,effect:'poison_all',cooldown:0,maxCd:4,type:'debuff',desc:'Poison all enemies 3 turns, 4-turn CD'},
+      {id:'strike',name:'Strike',baseDmg:7,effect:null,cooldown:0,maxCd:0,type:'atk',desc:'7 dmg, no cooldown'}
+    ],
+    weapon:{id:'simple_book',name:'Simple Book',dmgBonus:0,dmgPct:0,healBonus:0}
+  },
+  mage:{name:'Mage',icon:'🔮',baseHp:25,baseStr:0,baseFth:0,baseInt:3,
+    color:'tag-mage',desc:'Powerful spells and AoE damage. Fragile but deadly.',
+    moves:[
+      {id:'fireball',name:'Fireball',baseDmg:7,effect:'burn2',cooldown:0,maxCd:3,type:'atk',desc:'7 dmg + burn 2 turns, 3-turn CD'},
+      {id:'mana_strike',name:'Mana Strike',baseDmg:7,effect:null,cooldown:0,maxCd:0,type:'atk',desc:'7 dmg, no cooldown'},
+      {id:'mana_overflow',name:'Mana Overflow',baseDmg:0,effect:'mana_overflow',cooldown:0,maxCd:4,type:'buff',desc:'+50% atk for 3 turns (starts next turn), 4-turn CD'},
+      {id:'lightning_strike',name:'Lightning Strike',baseDmg:7,effect:'aoe',cooldown:0,maxCd:2,type:'atk',desc:'7 dmg to ALL enemies, 2-turn CD'}
+    ],
+    weapon:{id:'simple_staff',name:'Simple Staff',dmgBonus:0,dmgPct:0}
+  }
+};
+
+// Mob stats updated per request
+const MOBS = {
+  rat:{name:'Rat',icon:'🐀',baseHp:8,dmg:4,goldMin:3,goldMax:6,ratSkin:0.5},
+  stone_golem:{name:'Stone Golem',icon:'🗿',baseHp:10,dmg:4,goldMin:5,goldMax:8,ironIngot:0.25},
+  bandit:{name:'Bandit',icon:'🗡️',baseHp:14,dmg:5,goldMin:7,goldMax:10,leather:0.25,cloth:0.25},
+  goblin:{name:'Goblin',icon:'👺',baseHp:14,dmg:6,goldMin:10,goldMax:15,stealGold:true},
+  knight_mob:{name:'Knight',icon:'🛡️',baseHp:16,dmg:7,goldMin:10,goldMax:15,warriorArmor:0.01}
+};
+
+const SHOP_ITEMS = [
+  {id:'minor_heal_pot',name:'Minor Healing Potion',desc:'Heals 15 HP',cost:30,type:'consumable'},
+  {id:'heal_pot',name:'Healing Potion',desc:'Heals 25 HP',cost:40,type:'consumable'},
+  {id:'minor_dmg_pot',name:'Minor Damage Potion',desc:'+5% damage this battle',cost:30,type:'consumable'},
+  {id:'major_dmg_pot',name:'Major Damage Potion',desc:'+10% damage this battle',cost:40,type:'consumable'},
+  {id:'knights_sword',name:"Knight's Sword",desc:'+1 base dmg to all warrior moves, +5% dmg',cost:100,type:'weapon',classes:['warrior','knight']},
+  {id:'apprentice_staff',name:'Apprentice Staff',desc:'+2 base dmg to all mage moves, +5% dmg',cost:100,type:'weapon',classes:['mage','wizard']},
+  {id:'holy_book',name:'Holy Book',desc:'+1 base dmg, +5% healing',cost:100,type:'weapon',classes:['priest','druid']}
+];
+
+const EVENTS = [
+  {id:'legendary_champion',name:'Legendary Champion',icon:'🏆',desc:'A legendary warrior who can teach you the Knight class.'},
+  {id:'wizard_king',name:'Wizard King',icon:'🧙',desc:'The Wizard King offers to teach you advanced magic.'},
+  {id:'druid_event',name:'The Druid',icon:'🌿',desc:'An ancient druid offers to share nature\'s power.'},
+  {id:'campfire',name:'Campfire',icon:'🔥',desc:'A warm campfire. Rest and recover.'},
+  {id:'training',name:'Training Grounds',icon:'💪',desc:'Train your body and mind for better combat.'},
+  {id:'scavenge',name:'Scavenge',icon:'🔍',desc:'Search the area for useful materials.'},
+  {id:'shop',name:'Wandering Merchant',icon:'🛒',desc:'A merchant with rare goods for sale.'},
+  {id:'prince_boss',name:"Prince's Challenge",icon:'👑',desc:'A powerful prince offers a special challenge for unique rewards.'}
+];
+
+// Armor recipes now include leather and cloth for all classes
+const ARMOR_RECIPES = {
+  warrior:[
+    {id:'warrior_chest',name:'Warrior Chestplate',cost:{iron:4},bonus:{str:2,hp:2}},
+    {id:'warrior_legs',name:'Warrior Leggings',cost:{iron:3},bonus:{hp:2,str:1}},
+    {id:'warrior_helm',name:'Warrior Helmet',cost:{iron:2},bonus:{hp:1,str:1}},
+    {id:'warrior_boots',name:'Warrior Boots',cost:{iron:2},bonus:{hp:1,str:1}},
+    {id:'leather_gloves',name:'Leather Gloves',cost:{leather:2},bonus:{str:1}},
+    {id:'cloth_wrap',name:'Cloth Wrap',cost:{cloth:2},bonus:{hp:1}}
+  ],
+  priest:[
+    {id:'priest_chest',name:'Priest Chestplate',cost:{cloth:4},bonus:{fth:2,hp:1}},
+    {id:'priest_legs',name:'Priest Leggings',cost:{cloth:3},bonus:{fth:2}},
+    {id:'priest_helm',name:'Priest Helmet',cost:{cloth:2},bonus:{fth:1}},
+    {id:'priest_boots',name:'Priest Boots',cost:{cloth:2},bonus:{fth:1}},
+    {id:'leather_vest',name:'Leather Vest',cost:{leather:3},bonus:{hp:1,fth:1}},
+    {id:'leather_bracers',name:'Leather Bracers',cost:{leather:2},bonus:{fth:1}}
+  ],
+  mage:[
+    {id:'mage_chest',name:'Mage Chestplate',cost:{leather:4},bonus:{int:2,hp:1}},
+    {id:'mage_legs',name:'Mage Leggings',cost:{leather:3},bonus:{int:2}},
+    {id:'mage_helm',name:'Mage Helmet',cost:{leather:2},bonus:{int:1}},
+    {id:'mage_boots',name:'Mage Boots',cost:{leather:2},bonus:{int:1}},
+    {id:'cloth_robe',name:'Cloth Robe',cost:{cloth:4},bonus:{int:1,hp:1}},
+    {id:'cloth_hood',name:'Cloth Hood',cost:{cloth:2},bonus:{int:1}}
+  ]
+};
+
+// ==================== GAME STATE ====================
+let G = {};
+
+function initGame(classKey){
+  const cls = CLASSES[classKey];
+  const savedUnits = G.selectedUnits || [1]; // Preserve selected units
+  G = {
+    classKey, className:cls.name, classIcon:cls.icon,
+    hp: cls.baseHp, maxHp: cls.baseHp,
+    str: cls.baseStr, int: cls.baseInt, fth: cls.baseFth,
+    statPoints: {hp:0,str:0,int:0,fth:0},
+    gold: 20, stage: 1, wavesCompleted: 0,
+    moves: JSON.parse(JSON.stringify(cls.moves)),
+    weapon: {...cls.weapon},
+    armor: [],
+    inventory: [],
+    equippedItems: [],
+    buffs: [],
+    statusEffects: [],
+    eventsCompleted: [],
+    legendaryTaught: false, wizardTaught: false, druidTaught: false,
+    upgraded: false, upgradedClass: null,
+    bear: null,
+    combatLog: [],
+    phase: 'fight',
+    selectedUnits: savedUnits
+  };
+}
+
+// ==================== HELPERS ====================
+function rng(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function pct(base,p){return Math.floor(base*(p/100));}
+function clamp(v,min,max){return Math.min(max,Math.max(min,v));}
+
+function getPlayerDamage(){
+  let base = 1;
+  let statKey = G.classKey==='warrior'||G.classKey==='knight'?'str':G.classKey==='mage'||G.classKey==='wizard'?'int':'fth';
+  let statVal = G[statKey]||0;
+  // Class-specific scaling: All classes scale primary stat at 4%
+  let scalingRate = 0.04;
+  // HP investment: warriors get extra dmg from HP stat too (tanky = hits harder)
+  let hpStatBonus = 0;
+  if(G.classKey==='warrior'||G.classKey==='knight'){
+    hpStatBonus = (G.statPoints.hp||0) * 0.02; // bonus dmg per HP stat point
+  }
+  let statBonus = statVal * scalingRate + hpStatBonus;
+  let dmgMult = 1 + statBonus;
+  if(G.buffs.find(b=>b.id==='enrage')) dmgMult *= 1.35;
+  if(G.buffs.find(b=>b.id==='order_up')) dmgMult *= 1.15;
+  if(G.buffs.find(b=>b.id==='mana_overflow')) dmgMult *= 1.5;
+  if(G.buffs.find(b=>b.id==='champion_fury_buff')) dmgMult *= 1.1;
+  dmgMult *= (1 + (G.weapon.dmgPct||0)/100);
+  if(G.combatDmgBuff) dmgMult *= (1 + G.combatDmgBuff/100);
+  return dmgMult;
+}
+
+function getHealingMult(){
+  let mult = 1;
+  // Priest/Druid scale FTH into healing at 4%; others get weak healing scaling
+  let fthScaling = (G.classKey==='priest'||G.classKey==='druid') ? 0.04 : 0.015;
+  let fthBonus = (G.fth||0) * fthScaling;
+  // Extra bonus: HP investment also boosts heal amount slightly for priest/druid
+  if(G.classKey==='priest'||G.classKey==='druid'){
+    fthBonus += (G.statPoints.hp||0) * 0.01;
+  }
+  mult += fthBonus;
+  if(G.weapon.healBonus) mult *= (1+(G.weapon.healBonus/100));
+  if(G.buffs.find(b=>b.id==='druid_heal_buff')) mult *= 1.015;
+  return mult;
+}
+
+function getMaxHp(){
+  let base = (G.classKey==='warrior'||G.classKey==='knight')?35:(G.classKey==='priest'||G.classKey==='druid')?30:25;
+  if(G.classKey==='knight') base += 5;
+  let hpStat = G.statPoints.hp||0;
+  // Warrior/Knight: each HP stat point gives 6% bonus HP; Priest/Druid: 4%; Mage/Wizard: 3%
+  let hpScaling = (G.classKey==='warrior'||G.classKey==='knight') ? 0.06
+                : (G.classKey==='priest'||G.classKey==='druid') ? 0.04
+                : 0.03;
+  let armorHp = G.armor.reduce((s,a)=>s+(a.bonus.hp||0),0);
+  return Math.floor(base*(1+hpStat*hpScaling)) + armorHp;
+}
+
+// No stat limits — returns a very large cap so UI checks never block
+function getMaxStats(){
+  return {hp:9999,str:9999,int:9999,fth:9999};
+}
+
+function getClassTag(){
+  let cn = G.classKey;
+  let labels = {warrior:'Warrior',priest:'Priest',mage:'Mage',knight:'Knight',druid:'Druid',wizard:'Wizard'};
+  let tags = {warrior:'tag-warrior',priest:'tag-priest',mage:'tag-mage',knight:'tag-knight',druid:'tag-druid',wizard:'tag-wizard'};
+  return `<span class="tag ${tags[cn]||'tag-warrior'}">${labels[cn]||cn}</span>`;
+}
+
+function getMobPool(count){
+  let pool = ['rat','stone_golem'];
+  if(G.stage>=3) pool.push('bandit','goblin');
+  // Knight is now a miniboss only — removed from normal pool
+  return pool;
+}
+
+function generateMobs(){
+  let count = rng(2,3);
+  let pool = getMobPool(count);
+  let mobs = [];
+  // 3-mob penalty: mobs are 10% weaker if count=3
+  let weakMult = (count===3) ? 0.9 : 1.0;
+  for(let i=0;i<count;i++){
+    let key = pool[rng(0,pool.length-1)];
+    let base = MOBS[key];
+    // HP scaling reduced to 5%
+    let hpMult = (0.9 + Math.random()*0.2) * Math.pow(1.05, G.stage-1) * weakMult;
+    let hp = Math.floor(base.baseHp * hpMult);
+    let dmg = Math.floor(base.dmg * Math.pow(1.05, G.stage-1) * weakMult);
+    mobs.push({key,name:base.name,icon:base.icon,hp,maxHp:hp,dmg,
+      goldMin:base.goldMin,goldMax:base.goldMax,data:base,
+      statuses:[],fleeing:false,stolen:false,goblinStole:false});
+  }
+  return mobs;
+}
+
+function hasMaterial(mat,count){
+  let inv = G.inventory.filter(i=>i.id===mat);
+  return inv.length>=count;
+}
+
+function useMaterial(mat,count){
+  let removed=0;
+  G.inventory = G.inventory.filter(i=>{
+    if(i.id===mat&&removed<count){removed++;return false;}return true;
+  });
+}
+
+function addInventory(id,name,qty=1){
+  for(let i=0;i<qty;i++) G.inventory.push({id,name});
+}
+
+function countInventory(id){return G.inventory.filter(i=>i.id===id).length;}
+
+// Buff tick: reduce turns by 1 each enemy turn
+function tickBuff(){
+  G.buffs = G.buffs.map(b=>({...b,turns:b.turns-1})).filter(b=>b.turns>0);
+}
+
+function tickCooldowns(){
+  G.moves.forEach(m=>{if(m.cooldown>0)m.cooldown--;});
+}
+
+function resetCooldowns(){
+  G.moves.forEach(m=>{m.cooldown=0;});
+}
+
+// Apply status damage to player and/or mobs — returns log entries
+function applyStatusDamage(mobs){
+  let logs=[];
+  if(G.statusEffects){
+    G.statusEffects = G.statusEffects.map(s=>{
+      if(s.type==='burn'){
+        let dmg=4;
+        G.hp=Math.max(0,G.hp-dmg);
+        logs.push({text:`🔥 Burn deals ${dmg} damage to you!`,cls:'damage'});
+        spawnFloatDmg('player-hp-area',dmg,'status-num');
+      }
+      if(s.type==='bleed'){
+        let dmg=3;
+        G.hp=Math.max(0,G.hp-dmg);
+        logs.push({text:`🩸 Bleed deals ${dmg} damage to you!`,cls:'damage'});
+        spawnFloatDmg('player-hp-area',dmg,'status-num');
+      }
+      if(s.type==='poison'){
+        let dmg=3;
+        G.hp=Math.max(0,G.hp-dmg);
+        logs.push({text:`☠️ Poison deals ${dmg} damage to you!`,cls:'damage'});
+        spawnFloatDmg('player-hp-area',dmg,'status-num');
+      }
+      return {...s,turns:s.turns-1};
+    }).filter(s=>s.turns>0);
+  }
+  if(mobs) mobs.forEach(m=>{
+    m.statuses = m.statuses.map(s=>{
+      if(s.type==='burn'){let d=4;m.hp=Math.max(0,m.hp-d);logs.push({text:`🔥 ${m.name} takes ${d} burn dmg`,cls:'info'});}
+      if(s.type==='poison'){let d=3;m.hp=Math.max(0,m.hp-d);logs.push({text:`☠️ ${m.name} takes ${d} poison dmg`,cls:'info'});}
+      if(s.type==='bleed'){let d=3;m.hp=Math.max(0,m.hp-d);logs.push({text:`🩸 ${m.name} bleeds for ${d}`,cls:'info'});}
+      return {...s,turns:s.turns-1};
+    }).filter(s=>s.turns>0);
+  });
+  return logs;
+}
+
+// Floating damage numbers
+function spawnFloatDmg(anchorId, val, cls){
+  let anchor = document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  let el = document.createElement('div');
+  el.className = `float-dmg ${cls}`;
+  el.textContent = cls==='heal-num'?`+${val}`:`-${val}`;
+  el.style.left = (30+Math.random()*40)+'%';
+  anchor.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},1100);
+}
+
+// ==================== SCREENS ====================
+let selectedClass = null;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  let el = document.getElementById(id+'-screen')||document.getElementById(id);
+  if(el) el.classList.add('active');
+}
+
+// ---- Wave Clear Overlay ----
+let _waveClearCallback = null;
+
+function showWaveClear(opts, callback){
+  // opts: {icon, title, sub, loot:[{text}], gold}
+  _waveClearCallback = callback;
+  let overlay = document.getElementById('wave-clear-overlay');
+  document.getElementById('wco-icon').textContent = opts.icon || '⚔️';
+  document.getElementById('wco-title').textContent = opts.title || 'Victory!';
+  document.getElementById('wco-sub').textContent = opts.sub || 'WAVE CLEARED';
+  let lootEl = document.getElementById('wco-loot');
+  lootEl.innerHTML = '';
+  if(opts.gold){
+    let t = document.createElement('div');
+    t.className='wco-loot-tag';
+    t.style.animationDelay='0.1s';
+    t.textContent = '🪙 +'+opts.gold+' Gold';
+    lootEl.appendChild(t);
+  }
+  (opts.loot||[]).forEach((l,i)=>{
+    let t = document.createElement('div');
+    t.className='wco-loot-tag';
+    t.style.animationDelay=(0.15+i*0.08)+'s';
+    t.textContent = l.text;
+    lootEl.appendChild(t);
+  });
+  overlay.classList.add('show');
+}
+
+function dismissWaveClear(){
+  let overlay = document.getElementById('wave-clear-overlay');
+  overlay.classList.remove('show');
+  if(_waveClearCallback){ _waveClearCallback(); _waveClearCallback=null; }
+}
+
+
+function renderClassSelect(){
+  let cc = document.getElementById('class-cards');
+  cc.innerHTML = '';
+  ['warrior','priest','mage'].forEach(k=>{
+    let cls = CLASSES[k];
+    cc.innerHTML += `<div class="class-card" id="card-${k}" onclick="selectClass('${k}')">
+      <div style="font-size:36px;margin-bottom:8px">${cls.icon}</div>
+      <h3 style="margin-bottom:4px">${cls.name}</h3>
+      <span class="tag ${cls.color}" style="margin-bottom:10px;display:inline-block">${cls.name}</span>
+      <p class="muted" style="margin-bottom:12px;font-size:13px">${cls.desc}</p>
+      <div class="stat-row"><span class="muted">HP</span><span>${cls.baseHp}</span></div>
+      <div class="stat-row"><span class="muted">Primary Stat</span><span>${k==='warrior'?'STR '+cls.baseStr:k==='priest'?'FTH '+cls.baseFth:'INT '+cls.baseInt}</span></div>
+      <div class="stat-row"><span class="muted">Style</span><span style="font-size:12px">${k==='warrior'?'Melee':k==='priest'?'Support':'Ranged'}</span></div>
+    </div>`;
+  });
+}
+
+function selectClass(k){
+  selectedClass = k;
+  document.querySelectorAll('.class-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('card-'+k).classList.add('selected');
+  document.getElementById('confirm-class-btn').disabled = false;
+}
+
+function confirmClass(){
+  if(!selectedClass) return;
+  initGame(selectedClass);
+  showScreen('game');
+  G.phase = 'fight';
+  renderGame();
+}
+
+// ==================== TOP BAR ====================
+function renderTopBar(){
+  let maxHp = getMaxHp();
+  if(G.hp > maxHp) G.hp = maxHp;
+  let statKey = G.classKey==='warrior'||G.classKey==='knight'?'STR':G.classKey==='mage'||G.classKey==='wizard'?'INT':'FTH';
+  let statVal = G.classKey==='warrior'||G.classKey==='knight'?G.str:G.classKey==='mage'||G.classKey==='wizard'?G.int:G.fth;
+  document.getElementById('top-bar').innerHTML = `
+    <span>${G.classIcon} ${getClassTag()}</span>
+    <div style="flex:1">
+      <div class="flex-row" style="gap:6px;margin-bottom:2px">
+        <span style="font-size:12px;color:var(--parchment3)">HP</span>
+        <span id="player-hp-area" style="font-size:12px;color:var(--gold);position:relative">${G.hp}/${maxHp}</span>
+      </div>
+      <div class="hp-bar-wrap" style="width:160px"><div class="hp-bar" style="width:${clamp(G.hp/maxHp*100,0,100)}%;background:${G.hp/maxHp<0.3?'var(--hp-red)':G.hp/maxHp<0.6?'#e65100':'var(--hp-green)'}"></div></div>
+    </div>
+    <span class="badge">${statKey} ${statVal}</span>
+    <span class="badge">🪙 ${G.gold}</span>
+    <span class="badge stage-badge">Stage ${G.stage}/15</span>
+    ${G.statusEffects&&G.statusEffects.length?G.statusEffects.map(s=>`<span class="status-icon ${s.type==='burn'?'burn':s.type==='poison'?'poison-s':'bleed'}">${s.type==='burn'?'🔥':s.type==='poison'?'☠️':'🩸'}${s.turns}</span>`).join(''):''}
+    ${G.buffs.length?G.buffs.map(b=>`<span class="tag" style="background:rgba(0,80,120,0.5);border-color:var(--ice);color:#adf;font-size:10px">${b.name}(${b.turns>900?'∞':b.turns+'t'})</span>`).join(''):''}
+  `;
+}
+
+// ==================== MAIN RENDER ====================
+function renderGame(){
+  renderTopBar();
+  if(G.phase==='fight') renderFight();
+  else if(G.phase==='rest') renderRest();
+  else if(G.phase==='event_select') renderEventSelect();
+  else if(G.phase==='event') renderEvent();
+  else if(G.phase==='shop') renderShop();
+  else if(G.phase==='boss') renderBossFight();
+}
+
+// ==================== FIGHT ====================
+let combatState = null;
+
+function startFight(){
+  G.combatLog = [];
+  G.combatDmgBuff = 0;
+  G._victoryHandled = false;
+
+  // Stage 15: Final Boss (King)
+  if(G.stage===15){
+    combatState = {mobs:null,turn:1,playerTurn:true,selectedMove:null,selectedTarget:0,
+      mathPhase:false,mathAnswered:0,currentQ:null,pendingAction:null,bearCooldown:0,animating:false};
+    G.phase = 'boss';
+    combatState.boss = {name:'The King',icon:'👑',hp:75,maxHp:75,dmg:22,statuses:[],isFinalBoss:true};
+    renderBossFight();
+    return;
+  }
+
+  // Stages 5 & 10: Knight Miniboss
+  if(G.stage===5||G.stage===10){
+    let minibossHp = 30;
+    let minibossDmg = Math.floor(8 * Math.pow(1.08, G.stage-1));
+    let boss = {name:'Knight Captain',icon:'🛡️',hp:minibossHp,maxHp:minibossHp,dmg:minibossDmg,statuses:[],isMiniboss:true};
+    combatState = {mobs:null,turn:1,playerTurn:true,selectedMove:null,selectedTarget:0,
+      mathPhase:false,mathAnswered:0,currentQ:null,pendingAction:null,bearCooldown:0,animating:false};
+    G.phase = 'boss';
+    G.miniboss = true;
+    combatState.boss = boss;
+    addLog(`⚔️ A Knight Captain blocks your path! (${minibossHp} HP, ${minibossDmg} dmg)`,'death');
+    renderBossFight();
+    return;
+  }
+
+  // Normal fight
+  let mobs = generateMobs();
+  combatState = {
+    mobs: mobs,
+    turn: 1,
+    playerTurn: true,
+    selectedMove: null,
+    selectedTarget: 0,
+    mathPhase: false,
+    mathAnswered: 0,
+    currentQ: null,
+    pendingAction: null,
+    bearCooldown: 0,
+    animating: false
+  };
+  G.phase = 'fight';
+  renderFight();
+}
+
+function renderFight(){
+  let cs = combatState;
+  if(!cs) { startFight(); return; }
+  let c = document.getElementById('game-content');
+  if(G.hp<=0){playerDied();return;}
+  
+  let aliveMobs = cs.mobs.filter(m=>m.hp>0);
+  if(aliveMobs.length===0){combatVictory();return;}
+
+  let maxHp = getMaxHp();
+
+  // Player card
+  let playerStatusHtml = (G.statusEffects||[]).map(s=>`<span class="status-icon ${s.type==='burn'?'burn':s.type==='poison'?'poison-s':'bleed'}">${s.type==='burn'?'🔥':s.type==='poison'?'☠️':'🩸'}${s.turns}</span>`).join('');
+  let playerHpPct = clamp(G.hp/maxHp*100,0,100);
+  let playerHpColor = G.hp/maxHp<0.3?'var(--hp-red)':G.hp/maxHp<0.6?'#e65100':'var(--hp-green)';
+
+  let playerCardHtml = `
+    <div class="combatant-card player-card" id="player-combat-card">
+      <div id="player-hp-area" style="position:relative;display:contents">
+      <div class="combatant-icon">${G.classIcon}</div>
+      <div class="combatant-name">${G.name||'Hero'}</div>
+      <div class="combatant-hp-text">${G.hp} / ${maxHp} HP</div>
+      <div class="combatant-hp-bar"><div class="combatant-hp-fill" style="width:${playerHpPct}%;background:${playerHpColor}"></div></div>
+      ${playerStatusHtml?`<div class="combatant-statuses">${playerStatusHtml}</div>`:''}
+      </div>
+    </div>`;
+
+  // Enemy cards
+  let mobsHtml = aliveMobs.map((m,i)=>`
+    <div class="combatant-card enemy-card ${cs.selectedTarget===i?'selected-target':''}" id="mob-card-${i}" onclick="selectTarget(${i})">
+      <div class="combatant-icon" style="font-size:36px">${m.icon}</div>
+      <div class="combatant-name">${m.name}</div>
+      <div class="combatant-hp-text">${m.hp}/${m.maxHp} · ⚔️${m.dmg}</div>
+      <div class="combatant-hp-bar"><div class="combatant-hp-fill" style="width:${clamp(m.hp/m.maxHp*100,0,100)}%;background:${m.hp/m.maxHp<0.35?'var(--hp-red)':'var(--hp-green)'}"></div></div>
+      ${m.statuses.length?`<div class="combatant-statuses">${m.statuses.map(s=>`<span class="status-icon ${s.type==='burn'?'burn':s.type==='poison'?'poison-s':'bleed'}">${s.type==='burn'?'🔥':s.type==='poison'?'☠️':'🩸'}${s.turns}</span>`).join('')}</div>`:''}
+      ${m.fleeing?'<div style="color:var(--gold);font-size:10px;font-family:Cinzel,serif;margin-top:2px">⚡ FLEEING</div>':''}
+    </div>`).join('');
+
+  let movesHtml = G.moves.map((m,i)=>{
+    let typeCls = m.type==='heal'?'type-heal':m.type==='buff'?'type-buff':m.type==='debuff'?'type-debuff':'type-atk';
+    let typeLabel = m.type==='heal'?'Heal':m.type==='buff'?'Buff':m.type==='debuff'?'Debuff':'Atk';
+    return `<div class="move-btn-wrap" style="position:relative">
+      <button class="move-btn-new ${cs.selectedMove===i?'selected-move':''}" onclick="selectMove(${i})"
+        ${m.cooldown>0||cs.mathPhase||cs.animating?'disabled':''}>
+        <span class="move-btn-name">${m.name}<span class="move-type-badge ${typeCls}">${typeLabel}</span></span>
+        <span class="move-btn-desc">${m.desc}</span>
+      </button>
+      ${m.cooldown>0?`<div class="move-btn-cd">CD ${m.cooldown}</div>`:''}
+    </div>`;
+  }).join('');
+
+  let buffDisplayHtml = G.buffs.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 6px">${G.buffs.map(b=>`<span class="tag" style="background:rgba(0,80,120,0.5);border-color:var(--ice);color:#adf;font-size:9px">${b.name}(${b.turns>900?'∞':b.turns+'t'})</span>`).join('')}</div>`:'';
+
+  let mathHtml = '';
+  if(cs.mathPhase&&cs.currentQ){
+    let choicesHtml = cs.currentQ.choices.map((c,i)=>
+      `<button class="mcq-btn" onclick="submitMath('${String(c).replace(/'/g, "\\'")}')"><span style="font-size:14px">${c}</span></button>`
+    ).join('');
+    mathHtml = `<div class="math-box">
+      <div class="phase-label">⚔️ Answer to attack — ${3-cs.mathAnswered} question${3-cs.mathAnswered!==1?'s':''} left</div>
+      <div class="question-display">${cs.currentQ.q}</div>
+      <div class="progress-dots">${Array(3).fill(0).map((_,j)=>{
+        let cls='';if(j<cs.mathAnswered) cls=' filled';
+        return `<div class="dot${cls}"></div>`;
+      }).join('')}</div>
+      <div class="mcq-grid">${choicesHtml}</div>
+      <button class="btn btn-danger" style="margin-top:12px;font-size:10px" onclick="cancelMath()">Cancel</button>
+    </div>`;
+  }
+
+  let inventoryActions = '';
+  let usables = G.inventory.filter(i=>['minor_heal_pot','heal_pot','minor_dmg_pot','major_dmg_pot'].includes(i.id));
+  let uniqueUsables = [...new Map(usables.map(i=>[i.id,i])).values()];
+  if(uniqueUsables.length&&!cs.mathPhase&&!cs.animating){
+    inventoryActions = `<div class="moves-panel" style="margin-top:8px"><div class="moves-panel-title">🧪 Items (costs your turn)</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${uniqueUsables.map(i=>`<button class="btn" style="font-size:11px" onclick="useItemInCombat('${i.id}')">${i.name} (${countInventory(i.id)})</button>`).join('')}</div>
+    </div>`;
+  }
+
+  let phaseHtml = `<div class="phase-banner-new ${cs.playerTurn?'player-phase':'enemy-phase'}">${cs.playerTurn?'⚔ YOUR TURN':'⚔ ENEMY TURN'}</div>`;
+
+  c.innerHTML = `
+    <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--parchment3);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:6px">⚔ Stage ${G.stage} &nbsp;·&nbsp; Turn ${cs.turn}</div>
+    ${phaseHtml}
+    <div class="combat-arena">
+      ${playerCardHtml}
+      <div class="vs-divider">VS</div>
+      <div class="mobs-group">${mobsHtml}</div>
+    </div>
+    ${buffDisplayHtml}
+    <div class="moves-panel">
+      <div class="moves-panel-title">Choose Your Move</div>
+      <div class="moves-grid">${movesHtml}</div>
+      ${!cs.mathPhase&&!cs.animating&&cs.selectedMove!==null?`<button class="btn btn-primary" style="margin-top:8px;width:100%;font-size:12px" onclick="executeMoveStart()">⚔️ Use ${G.moves[cs.selectedMove].name}</button>`:''}
+    </div>
+    ${mathHtml}
+    ${inventoryActions}
+    <div class="combat-log-panel" style="margin-top:8px">
+      <div class="combat-log-title">Combat Log</div>
+      <div class="combat-log" id="combat-log">${[...G.combatLog].reverse().map(l=>`<div class="log-entry ${l.cls||''}">${l.text}</div>`).join('')}</div>
+    </div>`;
+  renderTopBar();
+}
+
+function selectTarget(i){
+  if(combatState.mathPhase||combatState.animating) return;
+  combatState.selectedTarget = i;
+  renderFight();
+}
+
+function selectMove(i){
+  if(combatState.mathPhase||combatState.animating) return;
+  combatState.selectedMove = i;
+  renderFight();
+}
+
+function generateQuestion(){
+  // Get questions from selected units only
+  let availableQuestions = [];
+  let units = G.selectedUnits || [1]; // Default to unit 1 if none selected
+  
+  units.forEach(unitNum => {
+    if(UNIT_QUESTIONS[unitNum] && UNIT_QUESTIONS[unitNum].length > 0){
+      availableQuestions = availableQuestions.concat(UNIT_QUESTIONS[unitNum]);
+    }
+  });
+  
+  // If no questions available, show error
+  if(availableQuestions.length === 0){
+    return {q: "No questions available for selected units", choices: ["OK", "OK", "OK", "OK"], ans: "OK"};
+  }
+  
+  // Pick a random question
+  let question = availableQuestions[rng(0, availableQuestions.length - 1)];
+  
+  // Shuffle the choices
+  let shuffledChoices = [...question.choices].sort(() => Math.random() - 0.5);
+  
+  return {q: question.q, ans: question.ans, choices: shuffledChoices};
+}
+
+function executeMoveStart(){
+  let cs = combatState;
+  if(cs.selectedMove===null||cs.animating) return;
+  let move = G.moves[cs.selectedMove];
+  if(move.cooldown>0) return;
+  cs.mathPhase = true;
+  cs.mathAnswered = 0;
+  cs.currentQ = generateQuestion();
+  cs.lastResult = '';
+  renderFight();
+}
+
+function submitMath(val){
+  let cs = combatState;
+  if(String(val) === String(cs.currentQ.ans)){
+    cs.mathAnswered++;
+    addLog('✓ Correct! ('+(3-cs.mathAnswered)+' left)','info');
+    if(cs.mathAnswered>=3){
+      cs.mathPhase = false;
+      executeMove();
+    } else {
+      cs.currentQ = generateQuestion();
+      renderFight();
+    }
+  } else {
+    cs.mathAnswered = 0;
+    G.hp = Math.max(0, G.hp - 1); // Lose 1 HP on wrong answer
+    addLog('✗ Wrong! ('+cs.currentQ.q+'='+cs.currentQ.ans+') -1 HP! Start over!','damage');
+    if(G.hp <= 0) { playerDied(); return; }
+    cs.currentQ = generateQuestion();
+    renderFight();
+  }
+}
+
+function cancelMath(){
+  combatState.mathPhase=false;
+  combatState.selectedMove=null;
+  renderFight();
+}
+
+function addLog(text,cls){G.combatLog.push({text,cls});}
+
+function animateMobHit(mobIndex, callback){
+  let card = document.getElementById('mob-card-'+mobIndex);
+  if(card){
+    let playerCard = document.getElementById('player-combat-card');
+    if(playerCard){
+      playerCard.classList.remove('anim-attack');
+      void playerCard.offsetWidth;
+      playerCard.classList.add('anim-attack');
+      setTimeout(()=>playerCard.classList.remove('anim-attack'), 420);
+    }
+    setTimeout(()=>{
+      card.classList.remove('anim-hit');
+      void card.offsetWidth;
+      card.classList.add('anim-hit');
+      let icon = card.querySelector('.combatant-icon');
+      if(icon){ icon.classList.remove('anim-icon-bounce'); void icon.offsetWidth; icon.classList.add('anim-icon-bounce'); setTimeout(()=>icon.classList.remove('anim-icon-bounce'),370); }
+      setTimeout(()=>{card.classList.remove('anim-hit');if(callback)callback();},460);
+    },150);
+  } else { if(callback) callback(); }
+}
+
+function animatePlayerHit(callback){
+  let pCard = document.getElementById('player-combat-card');
+  let flash = document.getElementById('screen-flash');
+  if(flash){ flash.className='flash-red'; setTimeout(()=>flash.className='',420); }
+  if(pCard){
+    pCard.classList.remove('anim-hit-player');
+    void pCard.offsetWidth;
+    pCard.classList.add('anim-hit-player');
+    setTimeout(()=>{pCard.classList.remove('anim-hit-player');if(callback)callback();},460);
+  } else {
+    let bar = document.getElementById('top-bar');
+    if(bar){ bar.style.animation='cardShake 0.35s ease'; setTimeout(()=>{bar.style.animation='';if(callback)callback();},400); }
+    else { if(callback) callback(); }
+  }
+}
+
+function animateEnemyAttack(callback){
+  let card = document.getElementById('mob-card-0') || document.getElementById('boss-card');
+  if(card){ card.classList.remove('anim-enemy-attack'); void card.offsetWidth; card.classList.add('anim-enemy-attack'); setTimeout(()=>card.classList.remove('anim-enemy-attack'),420); }
+  if(callback) setTimeout(callback, 180);
+}
+
+// ===== PER-MOVE VFX ENGINE =====
+// Spawn emoji particles from an element
+function vfxParticles(anchorId, emojis, count, opts={}){
+  let anchor = document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      let el=document.createElement('div');
+      let emoji=emojis[Math.floor(Math.random()*emojis.length)];
+      el.className='vfx-particle '+(opts.size||'');
+      el.textContent=emoji;
+      let tx=(Math.random()-0.5)*80;
+      let ty=-(Math.random()*60+20);
+      el.style.cssText=`left:${20+Math.random()*60}%;top:${opts.top||'30%'};--tx:${tx}px;--ty:${ty}px;animation-duration:${0.7+Math.random()*0.4}s;`;
+      anchor.appendChild(el);
+      setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},1200);
+    }, i*50);
+  }
+}
+
+// Draw lightning bolts as SVG on top of a card
+function vfxLightning(anchorId, color='#ccddff', count=3){
+  let anchor = document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  for(let b=0;b<count;b++){
+    setTimeout(()=>{
+      let svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 60 100');
+      svg.className='vfx-lightning';
+      svg.style.cssText=`position:absolute;top:0;left:${10+Math.random()*60}%;width:30px;height:60px;z-index:201;`;
+      let pts=[];
+      let x=15,y=0;
+      for(let s=0;s<6;s++){x+=((Math.random()-0.5)*18);y+=17;pts.push(`${x},${y}`);}
+      let poly=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+      poly.setAttribute('points',pts.join(' '));
+      poly.setAttribute('stroke',color);poly.setAttribute('stroke-width','3');
+      poly.setAttribute('fill','none');poly.setAttribute('stroke-linecap','round');
+      svg.appendChild(poly);
+      anchor.appendChild(svg);
+      setTimeout(()=>{if(svg.parentNode)svg.parentNode.removeChild(svg);},800);
+    },b*80);
+  }
+}
+
+// Fire blobs rising from card
+function vfxFire(anchorId, count=4){
+  let anchor=document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      let el=document.createElement('div');
+      el.className='vfx-fire';
+      el.textContent=['🔥','🔥','💥'][Math.floor(Math.random()*3)];
+      el.style.cssText=`left:${10+Math.random()*70}%;bottom:10%;animation-duration:${0.5+Math.random()*0.3}s;`;
+      anchor.appendChild(el);
+      setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},900);
+    },i*80);
+  }
+}
+
+// Holy light burst
+function vfxHoly(anchorId){
+  let anchor=document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  let el=document.createElement('div');
+  el.className='vfx-holy';
+  el.style.cssText='width:40px;height:40px;background:radial-gradient(circle,rgba(255,255,200,0.9),rgba(255,220,80,0.4),transparent);position:absolute;top:50%;left:50%;margin:-20px;';
+  anchor.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},700);
+  vfxParticles(anchorId,['✨','⭐','🌟'],4,{size:'small'});
+}
+
+// Bleed drips
+function vfxBleed(anchorId, count=4){
+  let anchor=document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      let el=document.createElement('div');
+      el.className='vfx-bleed';
+      el.textContent='🩸';
+      el.style.cssText=`left:${15+Math.random()*65}%;top:${10+Math.random()*40}%;animation-duration:${0.5+Math.random()*0.2}s;`;
+      anchor.appendChild(el);
+      setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},700);
+    },i*60);
+  }
+}
+
+// Poison cloud
+function vfxPoison(anchorId){
+  let anchor=document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  ['☠️','💚','🟢'].forEach((e,i)=>{
+    setTimeout(()=>{
+      let el=document.createElement('div');
+      el.className='vfx-poison';
+      el.textContent=e;
+      el.style.cssText=`left:${15+i*25}%;top:20%;animation-duration:${0.7+i*0.1}s;`;
+      anchor.appendChild(el);
+      setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},1000);
+    },i*100);
+  });
+}
+
+// Slash streaks across a card
+function vfxSlash(anchorId, count=2){
+  let anchor=document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  let colors=['#ffffff','#ffeeaa','#ff8888'];
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      let el=document.createElement('div');
+      el.className='vfx-slash';
+      let angle=-30+Math.random()*60;
+      let h=40+Math.random()*30;
+      el.style.cssText=`left:${20+Math.random()*50}%;top:10%;height:${h}px;background:linear-gradient(to bottom,transparent,${colors[i%colors.length]},transparent);--angle:${angle}deg;`;
+      anchor.appendChild(el);
+      setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},500);
+    },i*80);
+  }
+}
+
+// Mana energy ring
+function vfxMana(anchorId){
+  let anchor=document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  let el=document.createElement('div');
+  el.className='vfx-mana';
+  el.style.cssText='position:absolute;top:50%;left:50%;';
+  anchor.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},700);
+  vfxParticles(anchorId,['💜','✨','⭐'],3,{size:'small'});
+}
+
+// Nature / vine leech
+function vfxVine(anchorId){
+  let anchor=document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  ['🌿','🍃','🌱'].forEach((e,i)=>{
+    setTimeout(()=>{
+      let el=document.createElement('div');
+      el.className='vfx-vine';
+      el.textContent=e;
+      el.style.cssText=`left:${10+i*30}%;top:20%;animation-duration:${0.6+i*0.08}s;`;
+      anchor.appendChild(el);
+      setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},800);
+    },i*80);
+  });
+}
+
+// Enrage burst on player
+function vfxEnrage(anchorId){
+  let anchor=document.getElementById(anchorId);
+  if(!anchor) return;
+  anchor.style.position='relative';
+  let el=document.createElement('div');
+  el.className='vfx-enrage';
+  anchor.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},600);
+  vfxParticles(anchorId,['😡','🔥','💢'],4,{size:'small'});
+}
+
+// Shield / holy gift buff on player
+function vfxShield(anchorId){
+  vfxParticles(anchorId,['🛡️','✨','💫'],4,{size:'small'});
+}
+
+// Bear summon
+function vfxBear(anchorId){
+  vfxParticles(anchorId,['🐻','🌿','💚'],5,{size:''});
+}
+
+// Overflow / power surge on player
+function vfxPowerUp(anchorId, emojis){
+  vfxParticles(anchorId, emojis, 5, {size:''});
+  let el=document.createElement('div');
+  let anchor=document.getElementById(anchorId);
+  if(!anchor) return;
+  el.className='vfx-enrage';
+  el.style.background='radial-gradient(circle,rgba(100,80,255,0.5),transparent 70%)';
+  anchor.style.position='relative';
+  anchor.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},600);
+}
+
+// Master dispatcher: given move id + target card id, run the right VFX
+function dispatchMoveVFX(moveId, targetCardId, playerCardId){
+  switch(moveId){
+    // ---- WARRIOR ----
+    case 'slash':
+      vfxSlash(targetCardId,2);
+      vfxParticles(targetCardId,['⚔️','💥'],2,{size:'small'});
+      break;
+    case 'lunge':
+      // Extra-deep lunge on player card, big impact on target
+      vfxSlash(targetCardId,3);
+      vfxParticles(targetCardId,['💥','⚔️','✦'],3,{});
+      break;
+    case 'stab':
+      vfxSlash(targetCardId,2);
+      vfxBleed(targetCardId,4);
+      break;
+    case 'enrage':
+      vfxEnrage(playerCardId);
+      break;
+    // ---- KNIGHT ----
+    case 'order_up':
+      vfxShield(playerCardId);
+      break;
+    case 'champions_fury':
+      vfxEnrage(playerCardId);
+      vfxSlash(targetCardId,1);
+      break;
+    // ---- MAGE ----
+    case 'fireball':
+    case 'flamethrower':
+      vfxFire(targetCardId, moveId==='flamethrower'?6:4);
+      vfxParticles(targetCardId,['🔥','💥'],3,{size:'small'});
+      break;
+    case 'mana_strike':
+      vfxMana(playerCardId);
+      vfxParticles(targetCardId,['💙','✨','⚡'],3,{size:'small'});
+      break;
+    case 'mana_overflow':
+    case 'mana_overdrive':
+      vfxPowerUp(playerCardId,['💜','⚡','✨','💙']);
+      break;
+    case 'lightning_strike':
+      // lightning on all visible mob cards
+      for(let i=0;i<4;i++){
+        let c=document.getElementById('mob-card-'+i);
+        if(c) vfxLightning('mob-card-'+i,'#aaccff',2);
+      }
+      if(document.getElementById('boss-card')) vfxLightning('boss-card','#aaccff',3);
+      vfxParticles(targetCardId,['⚡','💙'],3,{size:'small'});
+      break;
+    // ---- PRIEST ----
+    case 'pray':
+      vfxHoly(playerCardId);
+      let flash=document.getElementById('screen-flash');
+      if(flash){flash.className='flash-green';setTimeout(()=>flash.className='',400);}
+      break;
+    case 'holy_gift':
+      vfxHoly(playerCardId);
+      vfxShield(playerCardId);
+      break;
+    case 'poison_powder':
+      for(let i=0;i<4;i++){let c=document.getElementById('mob-card-'+i);if(c)vfxPoison('mob-card-'+i);}
+      if(document.getElementById('boss-card')) vfxPoison('boss-card');
+      break;
+    case 'strike':
+      vfxSlash(targetCardId,2);
+      vfxParticles(targetCardId,['✝️','💥'],2,{size:'small'});
+      break;
+    // ---- DRUID ----
+    case 'vine_leech':
+      vfxVine(targetCardId);
+      vfxParticles(playerCardId,['💚','🌿'],3,{size:'small'});
+      break;
+    case 'natures_wrath':
+      vfxVine(targetCardId);
+      vfxHoly(playerCardId);
+      vfxParticles(targetCardId,['🌿','💥'],3,{size:'small'});
+      break;
+    case 'natures_power':
+      vfxVine(playerCardId);
+      vfxHoly(playerCardId);
+      break;
+    // ---- WIZARD ----
+    case 'mana_overflow_wiz':
+      vfxPowerUp(playerCardId,['🔮','⚡','✨']);
+      break;
+    default:
+      // generic hit sparks
+      vfxParticles(targetCardId,['💥','✦'],2,{size:'small'});
+  }
+}
+
+function executeMove(){
+  let cs = combatState;
+  let move = G.moves[cs.selectedMove];
+  let aliveMobs = cs.mobs.filter(m=>m.hp>0);
+  let targetIdx = cs.selectedTarget;
+  if(targetIdx>=aliveMobs.length) targetIdx=0;
+  let target = aliveMobs[targetIdx];
+  let dmgMult = getPlayerDamage();
+  let weaponBonus = G.weapon.dmgBonus||0;
+
+  if(move.maxCd>0) move.cooldown = move.maxCd;
+
+  let doAfterAnim = ()=>{
+    // Execute move effect
+    if(move.type==='atk'){
+      let dmg = Math.floor((move.baseDmg+weaponBonus)*dmgMult);
+      if(move.effect==='aoe'){
+        aliveMobs.forEach(m=>{m.hp=Math.max(0,m.hp-dmg);});
+        addLog(`⚡ ${move.name} hits all enemies for ${dmg} dmg!`,'buff');
+      } else {
+        target.hp = Math.max(0,target.hp-dmg);
+        addLog(`⚔️ ${move.name} deals ${dmg} to ${target.name}!`,'buff');
+      }
+      if(move.effect==='bleed'&&target&&target.hp>0){
+        target.statuses.push({type:'bleed',turns:3});
+        addLog(`🩸 ${target.name} bleeds!`,'info');
+      }
+      if(move.effect==='burn2'&&target&&target.hp>0){
+        target.statuses.push({type:'burn',turns:2});
+        addLog(`🔥 ${target.name} burns!`,'info');
+      }
+      if(move.effect==='burn3'&&target&&target.hp>0){
+        target.statuses.push({type:'burn',turns:3});
+        addLog(`🔥 ${target.name} burns!`,'info');
+      }
+      if(move.id==='vine_leech'&&target){
+        let steal=Math.floor(dmg*0.25);
+        G.hp=Math.min(getMaxHp(),G.hp+steal);
+        addLog(`🌿 Vine Leech heals you for ${steal}!`,'heal');
+      }
+      if(move.id==='champions_fury'){
+        G.buffs.push({id:'champion_fury_buff',name:'Champion Fury',turns:1});
+        addLog("Champion's Fury! +10% dmg for 1 turn.",'buff');
+      }
+      if(move.id==='mana_overdrive'&&target){
+        target.statuses.push({type:'burn',turns:99});
+        addLog('Mana Overdrive — guaranteed burn!','buff');
+      }
+      if(move.id==='natures_power'){
+        let h=Math.floor(getMaxHp()*0.5*getHealingMult());
+        G.hp=Math.min(getMaxHp(),G.hp+h);
+        addLog(`Nature's Power heals ${h} HP!`,'heal');
+      }
+      if(move.effect==='natures_wrath'){
+        let h=Math.floor(getMaxHp()*0.5*getHealingMult());
+        G.hp=Math.min(getMaxHp(),G.hp+h);
+        addLog(`🌿 Nature's Wrath heals ${h} HP!`,'heal');
+      }
+    } else if(move.type==='heal'){
+      let pctHeal = move.id==='pray'?(G.classKey==='druid'?40:15):0;
+      let h=Math.floor(getMaxHp()*(pctHeal/100)*getHealingMult());
+      G.hp=Math.min(getMaxHp(),G.hp+h);
+      addLog(`✨ ${move.name} heals ${h} HP!`,'heal');
+    } else if(move.type==='buff'){
+      // Buff moves apply immediately this turn
+      if(move.effect==='enrage'){
+        let existing=G.buffs.findIndex(b=>b.id==='enrage');
+        if(existing>=0) G.buffs[existing].turns=3;
+        else G.buffs.push({id:'enrage',name:'Enrage',turns:3});
+        addLog('😡 Enrage! +35% dmg, +20% dmg taken for 3 turns.','buff');
+      }
+      if(move.effect==='order_up'){
+        let existing=G.buffs.findIndex(b=>b.id==='order_up');
+        if(existing>=0) G.buffs[existing].turns=3;
+        else G.buffs.push({id:'order_up',name:'Order Up',turns:3});
+        addLog('🛡️ Order Up! +15% dmg & defense for 3 turns.','buff');
+      }
+      if(move.effect==='mana_overflow'){
+        let existing=G.buffs.findIndex(b=>b.id==='mana_overflow');
+        if(existing>=0) G.buffs[existing].turns=3;
+        else G.buffs.push({id:'mana_overflow',name:'Mana Overflow',turns:3});
+        addLog('💜 Mana Overflow! +50% atk for 3 turns.','buff');
+      }
+      if(move.effect==='holy_gift'){
+        let h=Math.floor(getMaxHp()*0.05*getHealingMult());
+        G.hp=Math.min(getMaxHp(),G.hp+h);
+        let existing=G.buffs.findIndex(b=>b.id==='holy_gift_dr');
+        if(existing>=0) G.buffs[existing].turns=3;
+        else G.buffs.push({id:'holy_gift_dr',name:'Damage Reduction',turns:3});
+        addLog(`✨ Holy Gift heals ${h} HP and grants 10% dmg reduction (3 turns)!`,'heal');
+      }
+    } else if(move.type==='debuff'){
+      if(move.effect==='poison_all'){
+        aliveMobs.forEach(m=>{m.statuses.push({type:'poison',turns:3});});
+        addLog('☠️ Poison Powder poisons all enemies!','buff');
+      }
+    }
+
+    cs.selectedMove=null;
+    cs.animating=false;
+
+    // Now apply player statuses AFTER player acts
+    let statusLogs=applyStatusDamage(null);
+    statusLogs.forEach(l=>addLog(l.text,l.cls));
+    renderTopBar();
+    if(G.hp<=0){renderFight();setTimeout(()=>playerDied(),300);return;}
+
+    // Transition to enemy turn
+    cs.playerTurn=false;
+    renderFight();
+    setTimeout(()=>doEnemyTurn(),500);
+  };
+
+  cs.animating=true;
+  let targetCardId = 'mob-card-'+targetIdx;
+  let playerCardId = 'player-combat-card';
+  // Fire VFX immediately (before damage resolves)
+  dispatchMoveVFX(move.id, targetCardId, playerCardId);
+
+  if(move.type==='atk'){
+    if(move.effect==='aoe'){
+      // Player lunges
+      let pCard=document.getElementById(playerCardId);
+      if(pCard){pCard.classList.remove('anim-attack');void pCard.offsetWidth;pCard.classList.add('anim-attack');setTimeout(()=>pCard.classList.remove('anim-attack'),420);}
+      aliveMobs.forEach((m,i)=>{
+        let card=document.getElementById('mob-card-'+i);
+        if(card){setTimeout(()=>{card.classList.remove('anim-hit');void card.offsetWidth;card.classList.add('anim-hit');setTimeout(()=>card.classList.remove('anim-hit'),500);},120+i*60);}
+      });
+      setTimeout(doAfterAnim, 500);
+    } else {
+      animateMobHit(targetIdx, doAfterAnim);
+    }
+  } else {
+    // Buff/heal/debuff
+    setTimeout(doAfterAnim, 350);
+  }
+}
+
+function doEnemyTurn(){
+  let cs=combatState;
+  tickBuff();
+  tickCooldowns();
+  let aliveMobs=cs.mobs.filter(m=>m.hp>0);
+  if(aliveMobs.length===0){combatVictory();return;}
+
+  // Mob status tick BEFORE mobs attack
+  let mobStatusLogs=applyStatusDamage(aliveMobs);
+  mobStatusLogs.forEach(l=>addLog(l.text,l.cls));
+  
+  // Check for mob deaths from status
+  cs.mobs.forEach(m=>{if(m.hp<=0&&m.statusKill!==true){m.statusKill=true;addLog(`💀 ${m.name} dies from status!`,'death');}});
+  aliveMobs=cs.mobs.filter(m=>m.hp>0);
+  if(aliveMobs.length===0){renderFight();setTimeout(()=>combatVictory(),400);return;}
+
+  // Each mob acts
+  let delayAccum=0;
+  aliveMobs.forEach((m,i)=>{
+    setTimeout(()=>{
+      if(m.hp<=0) return;
+      
+      // Goblin: 10% chance to steal gold and flee (only if not stolen yet)
+      if(m.key==='goblin'&&!m.goblinStole&&Math.random()<0.10){
+        let steal=Math.max(1,Math.floor(G.gold*0.15));
+        G.gold=Math.max(0,G.gold-steal);
+        m.goblinStole=true;
+        m.stolen=true;
+        m.fleeing=true;
+        addLog(`${m.icon} Goblin steals ${steal} gold and flees!`,'enemy');
+        renderTopBar();
+        return; // Goblin doesn't attack this turn
+      }
+
+      // Fleeing mobs don't attack
+      if(m.fleeing) return;
+
+      // Normal attack
+      let dmg=m.dmg;
+      let drMult=1;
+      if(G.buffs.find(b=>b.id==='holy_gift_dr')) drMult*=0.9;
+      if(G.buffs.find(b=>b.id==='order_up')) drMult*=0.85;
+      if(G.buffs.find(b=>b.id==='enrage')) drMult*=1.2;
+      dmg=Math.floor(dmg*drMult);
+      G.hp=Math.max(0,G.hp-dmg);
+      addLog(`${m.icon} ${m.name} attacks for ${dmg}!`,'enemy');
+      // Animate: enemy lunges, then player gets hit
+      let mobIdx=cs.mobs.indexOf(m);
+      let mCard=document.getElementById('mob-card-'+mobIdx);
+      if(mCard){mCard.classList.remove('anim-enemy-attack');void mCard.offsetWidth;mCard.classList.add('anim-enemy-attack');setTimeout(()=>mCard.classList.remove('anim-enemy-attack'),420);}
+      setTimeout(()=>animatePlayerHit(null),160);
+      renderTopBar();
+      if(G.hp<=0){renderFight();setTimeout(()=>playerDied(),300);return;}
+    }, delayAccum);
+    delayAccum += 400;
+  });
+
+  // After all mobs attack, transition back to player turn
+  setTimeout(()=>{
+    if(G.hp<=0) return;
+    cs.turn++;
+    cs.playerTurn=true;
+    cs.animating=false;
+    renderFight();
+  }, delayAccum+200);
+}
+
+function useItemInCombat(id){
+  let idx=G.inventory.findIndex(i=>i.id===id);
+  if(idx<0) return;
+  G.inventory.splice(idx,1);
+  if(id==='minor_heal_pot'){G.hp=Math.min(getMaxHp(),G.hp+15);addLog('🧪 Minor Healing Potion: +15 HP','heal');}
+  if(id==='heal_pot'){G.hp=Math.min(getMaxHp(),G.hp+25);addLog('🧪 Healing Potion: +25 HP','heal');}
+  if(id==='minor_dmg_pot'){G.combatDmgBuff=(G.combatDmgBuff||0)+5;addLog('⚗️ Minor Damage Potion: +5% dmg','buff');}
+  if(id==='major_dmg_pot'){G.combatDmgBuff=(G.combatDmgBuff||0)+10;addLog('⚗️ Major Damage Potion: +10% dmg','buff');}
+  renderTopBar();
+  combatState.playerTurn=false;
+  renderFight();
+  setTimeout(()=>doEnemyTurn(),400);
+}
+
+function combatVictory(){
+  if(G._victoryHandled) return;
+  G._victoryHandled = true;
+  G.wavesCompleted++;
+  let allMobs=combatState.mobs;
+  let totalGold=0;
+  let lootItems=[];
+  allMobs.forEach(m=>{
+    let g=rng(m.goldMin||3,m.goldMax||6);
+    if(m.stolen){g=0;}
+    totalGold+=g;
+    if(m.key==='rat'&&Math.random()<0.5){addInventory('rat_skin','Rat Skin');addLog('🐀 Dropped: Rat Skin','info');lootItems.push({text:'🐀 Rat Skin'});}
+    if(m.key==='stone_golem'&&Math.random()<0.25){addInventory('iron','Iron Ingot');addLog('🗿 Dropped: Iron Ingot','info');lootItems.push({text:'🗿 Iron Ingot'});}
+    if(m.key==='bandit'&&Math.random()<0.25){addInventory('leather','Leather');addLog('🗡️ Dropped: Leather','info');lootItems.push({text:'🗡️ Leather'});}
+    if(m.key==='bandit'&&Math.random()<0.25){addInventory('cloth','Cloth');addLog('🗡️ Dropped: Cloth','info');lootItems.push({text:'🪡 Cloth'});}
+    if(m.key==='goblin'&&Math.random()<0.3){addInventory('cloth','Cloth');addLog('👺 Dropped: Cloth','info');lootItems.push({text:'🪡 Cloth'});}
+    if(m.key==='knight_mob'&&Math.random()<0.01){
+      let pieces=['Warrior Helmet','Warrior Boots','Warrior Leggings','Warrior Chestplate'];
+      addInventory('warrior_armor_drop',pieces[rng(0,3)]);
+      addLog('🛡️ Rare warrior armor dropped!','death');
+      lootItems.push({text:'🛡️ Rare Armor!'});
+    }
+  });
+  G.gold+=totalGold;
+  lootItems.push({text:'✨ +3 Stat Points'});
+  addLog(`⚔️ Victory! Gained ${totalGold} gold.`,'death');
+  addLog('Gained 3 stat points!','buff');
+  G.pendingStatPoints = (G.pendingStatPoints||0)+3;
+  G.buffs=[]; G.combatDmgBuff=0;
+  resetCooldowns();
+  G._restedThisStage=false;
+  // Show wave clear overlay, then go to rest
+  let mobNames = allMobs.map(m=>m.icon+' '+m.name).join(', ');
+  showWaveClear({
+    icon: '⚔️',
+    title: 'Wave Cleared!',
+    sub: 'STAGE ' + G.stage + ' · ' + mobNames,
+    gold: totalGold,
+    loot: lootItems
+  }, ()=>{
+    G.phase='rest';
+    renderRest();
+  });
+}
+
+function playerDied(){
+  showScreen('defeat');
+  document.getElementById('defeat-msg').textContent=`You were slain on stage ${G.stage}. Better luck next time!`;
+}
+
+// ==================== REST ====================
+function renderRest(){
+  // Heal 25% after every fight (called once per rest; guard against double-heal)
+  if(!G._restedThisStage){
+    let heal=Math.floor(getMaxHp()*0.25);
+    G.hp=Math.min(getMaxHp(),G.hp+heal);
+    G._lastHeal=heal;
+    G._restedThisStage=true;
+  }
+  renderTopBar();
+  
+  let c=document.getElementById('game-content');
+  let sp=G.pendingStatPoints||0;
+  
+  let invHtml='<div class="inventory-grid">';
+  let matCounts={};
+  G.inventory.forEach(i=>{matCounts[i.id]=(matCounts[i.id]||0)+1;});
+  Object.entries(matCounts).forEach(([id,cnt])=>{
+    let name=G.inventory.find(i=>i.id===id)?.name||id;
+    invHtml+=`<div class="inv-item">${name}<br><span style="color:var(--gold)">${cnt}x</span></div>`;
+  });
+  invHtml+='</div>';
+  
+  let statAllocHtml=renderStatAlloc(sp);
+  
+  let upgradeNote='';
+  if(!G.upgraded){
+    upgradeNote=`<div class="class-upgrade-banner"><span style="color:var(--gold)">⭐ You are eligible for a class upgrade! Find the right Event to evolve.</span></div>`;
+  }
+
+  c.innerHTML=`
+    <h2 style="text-align:center;margin-bottom:4px">🏕️ Rest Camp — Stage ${G.stage}</h2>
+    <p class="muted" style="text-align:center;margin-bottom:10px">Rested and healed ${G._lastHeal||0} HP · All cooldowns reset!</p>
+    ${upgradeNote}
+    <div class="grid2">
+      <div>
+        <div class="panel">
+          <div class="panel-title">Stat Allocation (${sp} pts pending)</div>
+          ${statAllocHtml}
+          ${sp>0?`<button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="applyStats()">Apply Stats</button>`:''}
+        </div>
+        <div class="panel">
+          <div class="panel-title">Crafting</div>
+          ${renderCrafting()}
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title">Inventory</div>
+          ${Object.keys(matCounts).length?invHtml:'<p class="muted">Empty</p>'}
+        </div>
+        <div class="panel">
+          <div class="panel-title">Equipment</div>
+          <div class="weapon-name">${G.weapon.name||'No Weapon'}</div>
+          ${G.armor.length?G.armor.map(a=>`<div style="font-size:13px;color:var(--parchment3)">${a.name}</div>`).join(''):'<p class="muted">No armor</p>'}
+        </div>
+        ${G.buffs.length?`<div class="panel"><div class="panel-title">Active Buffs</div>${renderBuffPanel()}</div>`:''}
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-primary" style="font-size:15px;padding:12px 30px" onclick="goToEventSelect()">Ready Up → Events</button>
+    </div>`;
+}
+
+let tempStatAlloc={hp:0,str:0,int:0,fth:0};
+
+function renderStatAlloc(sp){
+  if(sp<=0) return '<p class="muted" style="font-size:12px">No points pending. Points carry over between stages!</p>';
+  tempStatAlloc={hp:0,str:0,int:0,fth:0};
+  let stats=['hp','str','int','fth'];
+  let labels={hp:'HP',str:'Strength',int:'Intelligence',fth:'Faith'};
+  let html='<p class="muted" style="font-size:12px;margin-bottom:8px">Allocate '+sp+' points — no limits! Each point gives class-scaled bonuses. Unspent points carry over!</p>';
+  stats.forEach(s=>{
+    let curPts=G.statPoints[s]||0;
+    // Show scaling hint per stat/class
+    let hint='';
+    if(s==='hp'){hint=(G.classKey==='warrior'||G.classKey==='knight')?'+6% MaxHP':( G.classKey==='priest'||G.classKey==='druid')?'+4% MaxHP':'+3% MaxHP';}
+    else if(s==='str'){hint=(G.classKey==='warrior'||G.classKey==='knight')?'+4% DMG':'+1% DMG';}
+    else if(s==='int'){hint=(G.classKey==='mage'||G.classKey==='wizard')?'+4% DMG':'+1% DMG';}
+    else if(s==='fth'){hint=(G.classKey==='priest'||G.classKey==='druid')?'+4% Heal':'+1.5% Heal';}
+    html+=`<div class="stat-alloc">
+      <span>${labels[s]}</span>
+      <span class="muted" style="font-size:11px;color:#88aacc">${hint}</span>
+      <span class="muted" style="font-size:12px">${curPts} pts</span>
+      <button class="btn" style="padding:4px 8px;font-size:11px" onclick="allocStat('${s}',-1,${sp})">-</button>
+      <span class="val" id="talloc-${s}">0</span>
+      <button class="btn" style="padding:4px 8px;font-size:11px" onclick="allocStat('${s}',1,${sp})">+</button>
+    </div>`;
+  });
+  html+=`<div class="stat-alloc"><span style="color:var(--gold)">Remaining:</span><span class="val" id="talloc-remain">${sp}</span></div>`;
+  return html;
+}
+
+function allocStat(s,dir,totalPts){
+  let total=Object.values(tempStatAlloc).reduce((a,b)=>a+b,0);
+  if(dir>0){
+    if(total>=totalPts) return;
+    tempStatAlloc[s]=(tempStatAlloc[s]||0)+1;
+  } else {
+    if((tempStatAlloc[s]||0)<=0) return;
+    tempStatAlloc[s]=(tempStatAlloc[s]||0)-1;
+  }
+  let el=document.getElementById('talloc-'+s);
+  if(el) el.textContent=tempStatAlloc[s];
+  let rem=document.getElementById('talloc-remain');
+  let used=Object.values(tempStatAlloc).reduce((a,b)=>a+b,0);
+  if(rem) rem.textContent=totalPts-used;
+}
+
+function applyStats(){
+  let used=Object.values(tempStatAlloc).reduce((a,b)=>a+b,0);
+  if(used===0) return;
+  Object.entries(tempStatAlloc).forEach(([k,v])=>{
+    if(v>0){
+      G.statPoints[k]=(G.statPoints[k]||0)+v;
+      if(k==='str') G.str=(G.str||0)+v;
+      else if(k==='int') G.int=(G.int||0)+v;
+      else if(k==='fth') G.fth=(G.fth||0)+v;
+      // HP stat: maxHp recalculated via getMaxHp, no direct G.hp gain here
+    }
+  });
+  G.pendingStatPoints=(G.pendingStatPoints||0)-used; // only deduct what was actually spent
+  G.maxHp=getMaxHp();
+  tempStatAlloc={hp:0,str:0,int:0,fth:0};
+  renderRest();
+}
+
+// Crafting section — class armor + universal material recipes
+const MATERIAL_RECIPES = [
+  {id:'craft_cloth',name:'Craft Cloth',input:{rat_skin:2},output:{id:'cloth',name:'Cloth'},desc:'2 Rat Skins → 1 Cloth'},
+  {id:'craft_leather',name:'Craft Leather',input:{rat_skin:2},output:{id:'leather',name:'Leather'},desc:'2 Rat Skins → 1 Leather'}
+];
+
+function renderCrafting(){
+  let baseClass=G.classKey==='knight'?'warrior':G.classKey==='druid'?'priest':G.classKey==='wizard'?'mage':G.classKey;
+  let armorRecipes=ARMOR_RECIPES[baseClass]||[];
+
+  // Icon mapping for items
+  const CRAFT_ICONS={
+    craft_cloth:'🧵',craft_leather:'🪶',
+    warrior_chest:'🛡️',warrior_legs:'🦵',warrior_helm:'⛑️',warrior_boots:'🥾',
+    priest_chest:'✨',priest_legs:'🩱',priest_helm:'👒',priest_boots:'🥿',
+    mage_chest:'🔮',mage_legs:'🧦',mage_helm:'🎓',mage_boots:'🥿',
+    leather_gloves:'🧤',cloth_wrap:'🪬',iron_shield:'🛡️',mage_ghostplate:'✨',
+    mage_leggings:'🧥',mage_helmet:'🪄',mage_roots:'🌿',
+    default:'⚗️'
+  };
+
+  function craftCardHtml(id, name, costLine, bonusLine, canCraft, owned, craftFn){
+    let icon=CRAFT_ICONS[id]||CRAFT_ICONS.default;
+    let cls='craft-card'+(owned?' craft-card-owned':canCraft?'':' craft-card-disabled');
+    return `<div class="${cls}" onclick="${canCraft&&!owned?craftFn:''}">
+      <div class="craft-card-icon">${icon}</div>
+      <div class="craft-card-name">${name}</div>
+      <div class="craft-card-cost">${costLine}</div>
+      ${bonusLine?`<div class="craft-card-bonus">${bonusLine}</div>`:''}
+      ${owned?`<div class="craft-card-owned-badge">✓ OWNED</div>`:''}
+    </div>`;
+  }
+
+  let matCards=MATERIAL_RECIPES.map(r=>{
+    let matKey=Object.keys(r.input)[0];
+    let matAmt=r.input[matKey];
+    let have=countInventory(matKey);
+    let canCraft=have>=matAmt;
+    return craftCardHtml(r.id,r.name,`${matKey==='rat_skin'?'Rat Skin':'?'} ×${matAmt} (${have})`,null,canCraft,false,`craftMaterial('${r.id}')`);
+  }).join('');
+
+  let armorCards=armorRecipes.map(r=>{
+    let matKey=Object.keys(r.cost)[0];
+    let matAmt=r.cost[matKey];
+    let matName=matKey==='iron'?'Iron':matKey==='cloth'?'Cloth':'Leather';
+    let have=countInventory(matKey);
+    let owned=!!G.armor.find(a=>a.id===r.id);
+    let canCraft=have>=matAmt&&!owned;
+    let bonusStr='+'+Object.entries(r.bonus).map(([k,v])=>`${v} ${k.toUpperCase()}`).join(', ');
+    return craftCardHtml(r.id,r.name,`${matName} ×${matAmt} (${have})`,bonusStr,canCraft,owned,`craftArmor('${r.id}')`);
+  }).join('');
+
+  return `
+    <div class="craft-section-label">Materials</div>
+    <div class="craft-grid">${matCards}</div>
+    <div class="craft-section-label">Armor</div>
+    <div class="craft-grid">${armorCards}</div>
+  `;
+}
+
+function craftMaterial(recipeId){
+  let r=MATERIAL_RECIPES.find(r=>r.id===recipeId);
+  if(!r) return;
+  let matKey=Object.keys(r.input)[0];
+  let matAmt=r.input[matKey];
+  if(!hasMaterial(matKey,matAmt)) return;
+  useMaterial(matKey,matAmt);
+  addInventory(r.output.id,r.output.name);
+  renderRest();
+}
+
+function craftArmor(id){
+  let baseClass=G.classKey==='knight'?'warrior':G.classKey==='druid'?'priest':G.classKey==='wizard'?'mage':G.classKey;
+  let recipes=ARMOR_RECIPES[baseClass]||[];
+  let recipe=recipes.find(r=>r.id===id);
+  if(!recipe) return;
+  let matKey=Object.keys(recipe.cost)[0];
+  let matAmt=recipe.cost[matKey];
+  if(!hasMaterial(matKey,matAmt)) return;
+  useMaterial(matKey,matAmt);
+  G.armor.push(recipe);
+  // Apply armor bonuses immediately
+  Object.entries(recipe.bonus).forEach(([k,v])=>{
+    if(k==='str') G.str=(G.str||0)+v;
+    else if(k==='int') G.int=(G.int||0)+v;
+    else if(k==='fth') G.fth=(G.fth||0)+v;
+  });
+  renderRest();
+}
+
+function renderBuffPanel(){
+  if(!G.buffs.length) return '<p class="muted" style="font-size:12px">No active buffs</p>';
+  let buffNames={enrage:'😡 Enrage',order_up:'🛡️ Order Up',mana_overflow:'💜 Mana Overflow',holy_gift_dr:'✨ Dmg Reduction',champion_fury_buff:'⚡ Champion Fury',wizard_train:'🧙 Wizard Mastery',druid_heal_buff:'🌿 Druid Mastery'};
+  return G.buffs.map(b=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <span>${buffNames[b.id]||b.name}</span>
+      <span style="color:var(--gold);font-family:Cinzel,serif">${b.turns>900?'∞':b.turns+'t'}</span>
+    </div>`).join('');
+}
+
+// ==================== EVENTS ====================
+function goToEventSelect(){
+  G.phase='event_select';
+  renderEventSelect();
+}
+
+function renderEventSelect(){
+  let c=document.getElementById('game-content');
+  let pool=[...EVENTS];
+  let chosen=[];
+  while(chosen.length<3&&pool.length>0){
+    let i=rng(0,pool.length-1);
+    chosen.push(pool.splice(i,1)[0]);
+  }
+  G.pendingEvents=chosen;
+  
+  let hardQuestBtn = G.hardQuestionCompleted ? '' : `<button class="hq-corner-btn" onclick="openHardQuestion()">🧠 Calculus Challenge</button>`;
+  
+  c.innerHTML=`
+    <div style="position:relative">
+      ${hardQuestBtn}
+      <h2 style="text-align:center;margin-bottom:6px">🗺️ Choose an Event</h2>
+      <p class="muted" style="text-align:center;margin-bottom:16px">Select one event to complete before your next battle</p>
+      ${chosen.map((e,i)=>`
+        <div class="event-card" onclick="selectEvent(${i})">
+          <div style="font-size:28px">${e.icon}</div>
+          <h3 style="margin:6px 0">${e.name}</h3>
+          <p class="muted">${e.desc}</p>
+        </div>`).join('')}
+    </div>`;
+}
+
+function selectEvent(i){
+  let ev=G.pendingEvents[i];
+  G.currentEvent=ev;
+  G.pendingEventIndex=i;
+  G.phase='event-question';
+  G.eventQuestion=generateQuestion();
+  renderEventQuestion();
+}
+
+function renderEventQuestion(){
+  let c=document.getElementById('game-content');
+  let q=G.eventQuestion;
+  let ev=G.currentEvent;
+  c.innerHTML=`
+    <div style="text-align:center;padding:40px;max-width:600px;margin:0 auto">
+      <div style="font-size:48px;margin-bottom:10px">${ev.icon}</div>
+      <h2 style="margin-bottom:6px">${ev.name}</h2>
+      <p class="muted" style="margin-bottom:20px">Answer correctly to access this event!</p>
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-title">❓ Math Question</div>
+        <p style="font-size:20px;color:var(--gold);margin:16px 0">${q.q}</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
+          ${q.choices.map(ch=>`<button class="btn" style="padding:12px;font-size:14px" onclick="submitEventAnswer('${String(ch).replace(/'/g,"\\'")}')">${ch}</button>`).join('')}
+        </div>
+      </div>
+      <button class="btn btn-danger" onclick="cancelEventQuestion()">← Back to Events</button>
+    </div>`;
+  renderTopBar();
+}
+
+function submitEventAnswer(val){
+  if(String(val)===String(G.eventQuestion.ans)){
+    // Correct - proceed to event
+    G.phase='event';
+    renderEvent();
+  } else {
+    // Wrong - skip event and go to next fight
+    let c=document.getElementById('game-content');
+    c.innerHTML=`
+      <div style="text-align:center;padding:40px">
+        <div style="font-size:64px">❌</div>
+        <h2 style="color:var(--blood2)">Wrong Answer!</h2>
+        <p style="font-size:18px;color:var(--parchment2);margin:16px 0">The correct answer was: <strong style="color:var(--gold)">${G.eventQuestion.ans}</strong></p>
+        <p style="color:var(--parchment3)">You missed your chance at this event. Moving on to the next battle...</p>
+        <button class="btn btn-primary" style="margin-top:20px" onclick="skipToNextFight()">Continue to Battle →</button>
+      </div>`;
+  }
+}
+
+function cancelEventQuestion(){
+  G.phase='event-select';
+  renderEventSelect();
+}
+
+function skipToNextFight(){
+  G.stage++;
+  G.phase='fight';
+  startFight();
+}
+
+function renderEvent(){
+  let ev=G.currentEvent;
+  let c=document.getElementById('game-content');
+  
+  if(ev.id==='campfire'){
+    let h=Math.floor(getMaxHp()*0.35);
+    G.hp=Math.min(getMaxHp(),G.hp+h);
+    c.innerHTML=`<div style="text-align:center;padding:40px">
+      <div style="font-size:64px">🔥</div>
+      <h2>Campfire</h2>
+      <p style="font-size:18px;color:var(--parchment2);margin:16px 0">You rest by the fire and recover ${h} HP!</p>
+      <button class="btn btn-primary" onclick="finishEvent()">Continue</button>
+    </div>`;
+    renderTopBar();
+    return;
+  }
+  
+  if(ev.id==='scavenge'){
+    let loot=[];
+    if(Math.random()<0.4){addInventory('rat_skin','Rat Skin');loot.push('Rat Skin');}
+    if(Math.random()<0.4){addInventory('leather','Leather');loot.push('Leather');}
+    if(Math.random()<0.4){addInventory('cloth','Cloth');loot.push('Cloth');}
+    if(Math.random()<0.4){addInventory('iron','Iron Ingot');loot.push('Iron Ingot');}
+    c.innerHTML=`<div style="text-align:center;padding:40px">
+      <div style="font-size:64px">🔍</div>
+      <h2>Scavenging</h2>
+      <p style="font-size:18px;color:var(--parchment2);margin:16px 0">You search the area and find:</p>
+      <p style="color:var(--gold);font-size:20px">${loot.length?loot.join(', '):'Nothing useful...'}</p>
+      <button class="btn btn-primary" style="margin-top:20px" onclick="finishEvent()">Continue</button>
+    </div>`;
+    return;
+  }
+  
+  if(ev.id==='training'){
+    c.innerHTML=`<div style="text-align:center;padding:40px">
+      <div style="font-size:64px">💪</div>
+      <h2>Training Grounds</h2>
+      <p class="muted" style="margin:10px 0">Choose what to train:</p>
+      <div style="display:flex;gap:16px;justify-content:center;margin:20px 0">
+        <button class="btn btn-primary" onclick="trainingStat('hp')">Train HP<br><span style="font-size:11px">+1 HP Stat Point</span></button>
+        <button class="btn btn-primary" onclick="trainingStat('atk')">Train Attack<br><span style="font-size:11px">+1 Primary Stat Point</span></button>
+      </div>
+    </div>`;
+    return;
+  }
+  
+  if(ev.id==='shop'){
+    G.phase='shop';
+    renderShop();
+    return;
+  }
+  
+  if(ev.id==='legendary_champion'){
+    // No stage gate — only class check
+    let canLearn=!G.upgraded&&(G.classKey==='warrior');
+    let alreadyKnight=G.classKey==='knight';
+    let wrongClass=G.classKey==='priest'||G.classKey==='druid'||G.classKey==='mage'||G.classKey==='wizard';
+    c.innerHTML=`<div style="padding:20px;text-align:center">
+      <div style="font-size:64px">🏆</div><h2>Legendary Champion</h2>
+      <p style="color:var(--parchment2);margin:12px 0">"I can teach you the ways of the Knight, warrior. Do you accept?"</p>
+      ${wrongClass?`<button class="btn" onclick="finishEvent()">Leave peacefully</button>`:
+        alreadyKnight?`<div><p class="muted">You train with him briefly...</p>
+          <button class="btn btn-primary" onclick="championTrain()">Train (+2 max HP)</button>
+          <button class="btn" style="margin-left:8px" onclick="finishEvent()">Leave</button></div>`:
+        canLearn?`<div>
+          <button class="btn btn-primary" onclick="evolveClass('knight')">Accept Knight Class</button>
+          <button class="btn btn-danger" style="margin-left:8px" onclick="rejectChampion()">Reject (-10 HP)</button>
+        </div>`:`<p class="muted">Only a Warrior may learn the Knight path.</p><button class="btn" onclick="finishEvent()">Leave</button>`}
+    </div>`;
+    return;
+  }
+  
+  if(ev.id==='wizard_king'){
+    let canLearn=!G.upgraded&&(G.classKey==='mage');
+    let alreadyWizard=G.classKey==='wizard';
+    let wrongClass=G.classKey==='warrior'||G.classKey==='knight'||G.classKey==='priest'||G.classKey==='druid';
+    c.innerHTML=`<div style="padding:20px;text-align:center">
+      <div style="font-size:64px">🧙</div><h2>The Wizard King</h2>
+      <p style="color:var(--parchment2);margin:12px 0">"I shall grant you the power of the Wizard. Will you accept?"</p>
+      ${wrongClass?`<button class="btn" onclick="finishEvent()">Leave peacefully</button>`:
+        alreadyWizard?`<div><p class="muted">The Wizard King nods approvingly...</p>
+          <button class="btn btn-primary" onclick="wizardTrain()">Train (+1.5% dmg)</button>
+          <button class="btn" style="margin-left:8px" onclick="finishEvent()">Leave</button></div>`:
+        canLearn?`<div>
+          <button class="btn btn-primary" onclick="evolveClass('wizard')">Accept Wizard Class</button>
+          <button class="btn btn-danger" style="margin-left:8px" onclick="rejectWizard()">Reject (Burn debuff)</button>
+        </div>`:`<p class="muted">Only a Mage may learn the Wizard path.</p><button class="btn" onclick="finishEvent()">Leave</button>`}
+    </div>`;
+    return;
+  }
+  
+  if(ev.id==='druid_event'){
+    let canLearn=!G.upgraded&&(G.classKey==='priest');
+    let alreadyDruid=G.classKey==='druid';
+    let wrongClass=G.classKey==='warrior'||G.classKey==='knight'||G.classKey==='mage'||G.classKey==='wizard';
+    c.innerHTML=`<div style="padding:20px;text-align:center">
+      <div style="font-size:64px">🌿</div><h2>The Ancient Druid</h2>
+      <p style="color:var(--parchment2);margin:12px 0">"Nature calls to you, healer. Will you embrace its power?"</p>
+      ${wrongClass?`<button class="btn" onclick="finishEvent()">Leave peacefully</button>`:
+        alreadyDruid?`<div><p class="muted">The druid shares his wisdom...</p>
+          <button class="btn btn-primary" onclick="druidTrain()">Train (+1.5% healing)</button>
+          <button class="btn" style="margin-left:8px" onclick="finishEvent()">Leave</button></div>`:
+        canLearn?`<div>
+          <button class="btn btn-primary" onclick="evolveClass('druid')">Accept Druid Class</button>
+          <button class="btn btn-danger" style="margin-left:8px" onclick="rejectDruid()">Reject (Poison debuff)</button>
+        </div>`:`<p class="muted">Only a Priest may learn the Druid path.</p><button class="btn" onclick="finishEvent()">Leave</button>`}
+    </div>`;
+    return;
+  }
+  
+  if(ev.id==='prince_boss'){
+    let boss={name:'The Prince',icon:'🤴',hp:50,maxHp:50,dmg:15,statuses:[],isPrince:true};
+    combatState={mobs:[boss],turn:1,playerTurn:true,selectedMove:null,selectedTarget:0,mathPhase:false,mathAnswered:0,currentQ:null,pendingAction:null,animating:false};
+    G.phase='boss';
+    addLog('The Prince challenges you! 50 HP, 15 dmg.','death');
+    G.prnceBoss=true;
+    combatState.boss=boss;
+    renderBossFight();
+    return;
+  }
+}
+
+function trainingStat(type){
+  if(type==='hp'){
+    G.statPoints.hp=(G.statPoints.hp||0)+1;
+    document.getElementById('game-content').innerHTML+='<p style="color:var(--gold);text-align:center">HP stat increased!</p>';
+  } else {
+    let sk=G.classKey==='warrior'||G.classKey==='knight'?'str':G.classKey==='mage'||G.classKey==='wizard'?'int':'fth';
+    G.statPoints[sk]=(G.statPoints[sk]||0)+1;
+    G[sk]=(G[sk]||0)+1;
+    document.getElementById('game-content').innerHTML+='<p style="color:var(--gold);text-align:center">Attack stat increased!</p>';
+  }
+  setTimeout(finishEvent,800);
+}
+
+function evolveClass(cls){
+  G.upgraded=true;
+  G.classKey=cls;
+  if(cls==='knight'){
+    G.maxHp=getMaxHp()+5;G.hp=Math.min(G.hp+5,G.maxHp);
+    G.statPoints.str=(G.statPoints.str||0)+2;G.str=(G.str||0)+2;
+    let enrIdx=G.moves.findIndex(m=>m.id==='enrage');
+    if(enrIdx>=0) G.moves[enrIdx]={id:'order_up',name:'Order Up',baseDmg:0,effect:'order_up',cooldown:0,maxCd:0,type:'buff',desc:'+15% dmg & defense next turn (3 turns)'};
+  }
+  if(cls==='wizard'){
+    G.statPoints.int=(G.statPoints.int||0)+4;G.int=(G.int||0)+4;
+    let fbIdx=G.moves.findIndex(m=>m.id==='fireball');
+    if(fbIdx>=0) G.moves[fbIdx]={id:'flamethrower',name:'Flamethrower',baseDmg:10,effect:'burn3',cooldown:0,maxCd:4,type:'atk',desc:'10 dmg + burn 3t, 4CD'};
+    let lsIdx=G.moves.findIndex(m=>m.id==='lightning_strike');
+    if(lsIdx>=0) G.moves[lsIdx].baseDmg=10;
+    let msIdx=G.moves.findIndex(m=>m.id==='mana_strike');
+    if(msIdx>=0) G.moves[msIdx].baseDmg=10;
+  }
+  if(cls==='druid'){
+    G.statPoints.fth=(G.statPoints.fth||0)+2;G.fth=(G.fth||0)+2;
+    let hgIdx=G.moves.findIndex(m=>m.id==='holy_gift');
+    if(hgIdx>=0) G.moves[hgIdx]={id:'vine_leech',name:'Vine Leech',baseDmg:9,effect:null,cooldown:0,maxCd:2,type:'atk',desc:'9 dmg, 25% lifesteal, 2CD'};
+    G.moves.push({id:'natures_wrath',name:"Nature's Wrath",baseDmg:9,effect:'natures_wrath',cooldown:0,maxCd:4,type:'atk',desc:'9 dmg + heal 50% max HP, 4CD'});
+  }
+  document.getElementById('game-content').innerHTML=`<div style="text-align:center;padding:40px">
+    <div style="font-size:64px">⭐</div>
+    <h2>Class Evolved!</h2>
+    <p style="font-size:20px;color:var(--gold);margin:16px 0">You are now a <strong>${cls.charAt(0).toUpperCase()+cls.slice(1)}</strong>!</p>
+    <button class="btn btn-primary" onclick="finishEvent()">Continue</button>
+  </div>`;
+  renderTopBar();
+}
+
+function championTrain(){G.maxHp=getMaxHp()+2;G.hp=Math.min(G.hp,G.maxHp);finishEvent();}
+function wizardTrain(){G.buffs.push({id:'wizard_train',name:'Wizard Mastery',turns:999});finishEvent();}
+function druidTrain(){G.buffs.push({id:'druid_heal_buff',name:'Druid Mastery',turns:999});finishEvent();}
+function rejectChampion(){G.hp=Math.max(1,G.hp-10);renderTopBar();finishEvent();}
+function rejectWizard(){G.statusEffects=G.statusEffects||[];G.statusEffects.push({type:'burn',turns:3});renderTopBar();finishEvent();}
+function rejectDruid(){G.statusEffects=G.statusEffects||[];G.statusEffects.push({type:'poison',turns:3});renderTopBar();finishEvent();}
+
+function finishEvent(){
+  G.stage++;
+  G._restedThisStage=false;
+  G.phase='fight';
+  startFight();
+}
+
+// ==================== SHOP ====================
+function renderShop(){
+  renderTopBar();
+  let c=document.getElementById('game-content');
+  let itemsHtml=SHOP_ITEMS.map(item=>{
+    let canBuy=G.gold>=item.cost;
+    let owned=item.type==='weapon'&&G.weapon.id===item.id;
+    let wrongClass=item.classes&&!item.classes.includes(G.classKey);
+    let disabled=!canBuy||owned||wrongClass;
+    return `<div class="shop-item">
+      <div>
+        <div style="color:var(--parchment)">${item.name}</div>
+        <div class="muted" style="font-size:12px">${item.desc}</div>
+        ${wrongClass?`<div style="color:#ff4444;font-size:11px">Not for your class</div>`:''}
+      </div>
+      <div style="text-align:right">
+        <div class="gold-text" style="margin-bottom:6px">🪙 ${item.cost}</div>
+        ${owned?`<span style="color:var(--gold);font-size:12px">Owned</span>`:
+          `<button class="btn" ${disabled?'disabled':''} onclick="buyItem('${item.id}')">Buy</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  
+  c.innerHTML=`
+    <h2 style="text-align:center;margin-bottom:6px">🛒 Wandering Merchant</h2>
+    <p class="muted" style="text-align:center;margin-bottom:16px">Gold: <span class="gold-text">🪙 ${G.gold}</span></p>
+    ${itemsHtml}
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-primary" onclick="finishEvent()">Leave Shop</button>
+    </div>`;
+}
+
+function buyItem(id){
+  let item=SHOP_ITEMS.find(i=>i.id===id);
+  if(!item||G.gold<item.cost) return;
+  G.gold-=item.cost;
+  if(item.type==='consumable') addInventory(item.id,item.name);
+  if(item.type==='weapon'){
+    if(id==='knights_sword') G.weapon={id:'knights_sword',name:"Knight's Sword",dmgBonus:1,dmgPct:5};
+    if(id==='apprentice_staff') G.weapon={id:'apprentice_staff',name:'Apprentice Staff',dmgBonus:2,dmgPct:5};
+    if(id==='holy_book') G.weapon={id:'holy_book',name:'Holy Book',dmgBonus:1,dmgPct:0,healBonus:5};
+  }
+  renderShop();
+}
+
+// ==================== BOSS FIGHT ====================
+function renderBossFight(){
+  let cs=combatState;
+  if(!cs||!cs.boss){startFight();return;}
+  let boss=cs.boss;
+  renderTopBar();
+  let c=document.getElementById('game-content');
+  if(G.hp<=0){playerDied();return;}
+  if(boss.hp<=0){bossVictory();return;}
+  
+  let maxHp=getMaxHp();
+  let playerHpPct=clamp(G.hp/maxHp*100,0,100);
+  let playerHpColor=G.hp/maxHp<0.3?'var(--hp-red)':G.hp/maxHp<0.6?'#e65100':'var(--hp-green)';
+  let playerStatusHtml=(G.statusEffects||[]).map(s=>`<span class="status-icon ${s.type==='burn'?'burn':s.type==='poison'?'poison-s':'bleed'}">${s.type==='burn'?'🔥':s.type==='poison'?'☠️':'🩸'}${s.turns}</span>`).join('');
+  let bossHpPct=clamp(boss.hp/boss.maxHp*100,0,100);
+  let bossStatusHtml=boss.statuses&&boss.statuses.length?boss.statuses.map(s=>`<span class="status-icon ${s.type==='burn'?'burn':s.type==='poison'?'poison-s':'bleed'}">${s.type==='burn'?'🔥':s.type==='poison'?'☠️':'🩸'}${s.turns}</span>`).join(''):'';
+
+  let movesHtml=G.moves.map((m,i)=>{
+    let typeCls=m.type==='heal'?'type-heal':m.type==='buff'?'type-buff':m.type==='debuff'?'type-debuff':'type-atk';
+    let typeLabel=m.type==='heal'?'Heal':m.type==='buff'?'Buff':m.type==='debuff'?'Debuff':'Atk';
+    return `<div class="move-btn-wrap" style="position:relative">
+      <button class="move-btn-new ${cs.selectedMove===i?'selected-move':''}" onclick="bossSelectMove(${i})"
+        ${m.cooldown>0||cs.mathPhase||cs.animating?'disabled':''}>
+        <span class="move-btn-name">${m.name}<span class="move-type-badge ${typeCls}">${typeLabel}</span></span>
+        <span class="move-btn-desc">${m.desc}</span>
+      </button>
+      ${m.cooldown>0?`<div class="move-btn-cd">CD ${m.cooldown}</div>`:''}
+    </div>`;
+  }).join('');
+
+  let mathHtml='';
+  if(cs.mathPhase&&cs.currentQ){
+    let choicesHtml = cs.currentQ.choices.map((c,i)=>
+      `<button class="mcq-btn" onclick="submitBossMath('${String(c).replace(/'/g, "\\'")}')"><span style="font-size:14px">${c}</span></button>`
+    ).join('');
+    mathHtml=`<div class="math-box">
+      <div class="phase-label">⚔️ Answer to attack — ${3-cs.mathAnswered} left</div>
+      <div class="question-display">${cs.currentQ.q}</div>
+      <div class="progress-dots">${Array(3).fill(0).map((_,i)=>`<div class="dot${i<cs.mathAnswered?' filled':''}"></div>`).join('')}</div>
+      <div class="mcq-grid">${choicesHtml}</div>
+      <button class="btn btn-danger" style="margin-top:12px;font-size:10px" onclick="cancelBossMath()">Cancel</button>
+    </div>`;
+  }
+
+  let phaseHtml=`<div class="phase-banner-new ${cs.playerTurn?'player-phase':'enemy-phase'}">${cs.playerTurn?'⚔ YOUR TURN':'👑 BOSS TURN'}</div>`;
+  let bossBuffHtml=G.buffs.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 6px">${G.buffs.map(b=>`<span class="tag" style="background:rgba(0,80,120,0.5);border-color:var(--ice);color:#adf;font-size:9px">${b.name}(${b.turns>900?'∞':b.turns+'t'})</span>`).join('')}</div>`:'';
+
+  let bossItemsHtml='';
+  let bossUsables=G.inventory.filter(i=>['minor_heal_pot','heal_pot','minor_dmg_pot','major_dmg_pot'].includes(i.id));
+  let uniqueBossUsables=[...new Map(bossUsables.map(i=>[i.id,i])).values()];
+  if(uniqueBossUsables.length&&!cs.mathPhase&&!cs.animating&&cs.playerTurn){
+    bossItemsHtml=`<div class="moves-panel" style="margin-top:8px"><div class="moves-panel-title">🧪 Items (costs your turn)</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${uniqueBossUsables.map(i=>`<button class="btn" style="font-size:11px" onclick="useItemInBossFight('${i.id}')">${i.name} (${countInventory(i.id)})</button>`).join('')}</div>
+    </div>`;
+  }
+  
+  c.innerHTML=`
+    <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--parchment3);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:6px">${boss.isMiniboss?'🛡️ Miniboss':boss.isFinalBoss?'👑 Final Boss':'Boss Fight'} &nbsp;·&nbsp; Stage ${G.stage}/15 &nbsp;·&nbsp; Turn ${cs.turn}</div>
+    ${phaseHtml}
+    <div class="combat-arena" id="boss-card" style="background:${boss.isMiniboss?'radial-gradient(ellipse at 50% 30%,#0a0f1f 0%,#060810 60%,#030408 100%)':'radial-gradient(ellipse at 50% 30%,#1f0505 0%,#0d0804 60%,#040202 100%)'};">
+      <div class="combatant-card player-card" id="player-combat-card">
+        <div id="player-hp-area" style="position:relative;display:contents">
+        <div class="combatant-icon">${G.classIcon}</div>
+        <div class="combatant-name">${G.name||'Hero'}</div>
+        <div class="combatant-hp-text">${G.hp} / ${maxHp} HP</div>
+        <div class="combatant-hp-bar"><div class="combatant-hp-fill" style="width:${playerHpPct}%;background:${playerHpColor}"></div></div>
+        ${playerStatusHtml?`<div class="combatant-statuses">${playerStatusHtml}</div>`:''}
+        </div>
+      </div>
+      <div class="vs-divider">VS</div>
+      <div class="combatant-card enemy-card" style="border-color:${boss.isMiniboss?'rgba(50,100,220,0.5)':'rgba(220,50,50,0.5)'};max-width:200px;background:${boss.isMiniboss?'rgba(0,0,30,0.5)':'rgba(30,0,0,0.5)'}">
+        <div class="combatant-icon" style="font-size:56px">${boss.icon}</div>
+        <div class="combatant-name" style="font-size:14px;color:${boss.isMiniboss?'#aaccff':'var(--gold-light)'}">${boss.name}</div>
+        ${boss.isMiniboss?`<div style="font-size:10px;font-family:Cinzel,serif;color:#8899ff;letter-spacing:1px;margin-bottom:2px">⚔ MINIBOSS</div>`:''}
+        <div class="combatant-hp-text" id="boss-hp-display">${boss.hp} / ${boss.maxHp} HP · ⚔️ ${boss.dmg}</div>
+        <div class="combatant-hp-bar" style="height:8px"><div class="combatant-hp-fill" style="width:${bossHpPct}%;background:${boss.hp/boss.maxHp<0.35?'var(--hp-red)':'var(--hp-green)'}"></div></div>
+        ${bossStatusHtml?`<div class="combatant-statuses">${bossStatusHtml}</div>`:''}
+      </div>
+    </div>
+    ${bossBuffHtml}
+    <div class="moves-panel" style="margin-top:8px">
+      <div class="moves-panel-title">Choose Your Move</div>
+      <div class="moves-grid">${movesHtml}</div>
+      ${!cs.mathPhase&&!cs.animating&&cs.selectedMove!==null?`<button class="btn btn-primary" style="margin-top:8px;width:100%;font-size:12px" onclick="executeBossMoveStart()">⚔️ Use ${G.moves[cs.selectedMove].name}</button>`:''}
+    </div>
+    ${mathHtml}
+    ${bossItemsHtml}
+    <div class="combat-log-panel" style="margin-top:8px">
+      <div class="combat-log-title">Combat Log</div>
+      <div class="combat-log">${[...G.combatLog].reverse().map(l=>`<div class="log-entry ${l.cls||''}">${l.text}</div>`).join('')}</div>
+    </div>`;
+}
+
+function bossSelectMove(i){if(combatState.mathPhase||combatState.animating)return;combatState.selectedMove=i;renderBossFight();}
+
+function executeBossMoveStart(){
+  let cs=combatState;
+  if(cs.selectedMove===null||cs.animating) return;
+  let move=G.moves[cs.selectedMove];
+  if(move.cooldown>0) return;
+  cs.mathPhase=true;cs.mathAnswered=0;cs.currentQ=generateQuestion();renderBossFight();
+}
+
+function submitBossMath(val){
+  let cs=combatState;
+  if(String(val)===String(cs.currentQ.ans)){
+    cs.mathAnswered++;
+    addLog('✓ Correct! ('+(3-cs.mathAnswered)+' left)','info');
+    if(cs.mathAnswered>=3){cs.mathPhase=false;executeBossMove();}
+    else{cs.currentQ=generateQuestion();renderBossFight();}
+  } else {
+    cs.mathAnswered=0;
+    G.hp = Math.max(0, G.hp - 1); // Lose 1 HP on wrong answer
+    addLog('✗ Wrong! ('+cs.currentQ.q+'='+cs.currentQ.ans+') -1 HP! Start over!','damage');
+    if(G.hp <= 0) { playerDied(); return; }
+    cs.currentQ=generateQuestion();renderBossFight();
+  }
+}
+
+function cancelBossMath(){combatState.mathPhase=false;combatState.selectedMove=null;renderBossFight();}
+
+function useItemInBossFight(id){
+  let idx=G.inventory.findIndex(i=>i.id===id);
+  if(idx<0) return;
+  G.inventory.splice(idx,1);
+  if(id==='minor_heal_pot'){G.hp=Math.min(getMaxHp(),G.hp+15);addLog('🧪 Minor Healing Potion: +15 HP','heal');}
+  if(id==='heal_pot'){G.hp=Math.min(getMaxHp(),G.hp+25);addLog('🧪 Healing Potion: +25 HP','heal');}
+  if(id==='minor_dmg_pot'){G.combatDmgBuff=(G.combatDmgBuff||0)+5;addLog('⚗️ Minor Damage Potion: +5% dmg','buff');}
+  if(id==='major_dmg_pot'){G.combatDmgBuff=(G.combatDmgBuff||0)+10;addLog('⚗️ Major Damage Potion: +10% dmg','buff');}
+  renderTopBar();
+  combatState.playerTurn=false;
+  combatState.animating=true;
+  renderBossFight();
+  setTimeout(()=>doBossTurn(),400);
+}
+
+function executeBossMove(){
+  let cs=combatState;
+  let move=G.moves[cs.selectedMove];
+  let boss=cs.boss;
+  if(move.maxCd>0) move.cooldown=move.maxCd;
+  let weaponBonus=G.weapon.dmgBonus||0;
+  let dmgMult=getPlayerDamage();
+  cs.animating=true;
+  
+  let doAction=()=>{
+    if(move.type==='atk'){
+      let dmg=Math.floor((move.baseDmg+weaponBonus)*dmgMult);
+      boss.hp=Math.max(0,boss.hp-dmg);
+      addLog(`⚔️ ${move.name} deals ${dmg} to ${boss.name}!`,'buff');
+      if(move.effect==='burn2'||move.effect==='burn3'){boss.statuses=boss.statuses||[];boss.statuses.push({type:'burn',turns:move.effect==='burn3'?3:2});addLog('🔥 Boss burns!','info');}
+      if(move.effect==='aoe'){boss.hp=Math.max(0,boss.hp-dmg);addLog(`⚡ AoE hits boss twice!`,'buff');}
+      if(move.effect==='bleed'){boss.statuses=boss.statuses||[];boss.statuses.push({type:'bleed',turns:3});addLog(`🩸 Boss bleeds!`,'info');}
+      if(move.id==='vine_leech'){let steal=Math.floor(dmg*0.25);G.hp=Math.min(getMaxHp(),G.hp+steal);addLog(`🌿 Lifesteal +${steal} HP`,'heal');}
+      if(move.effect==='natures_wrath'){let h=Math.floor(getMaxHp()*0.5*getHealingMult());G.hp=Math.min(getMaxHp(),G.hp+h);addLog(`🌿 Nature's Wrath heals ${h} HP!`,'heal');}
+    } else if(move.type==='heal'){
+      let pct2=move.id==='pray'?(G.classKey==='druid'?40:15):5;
+      let h=Math.floor(getMaxHp()*(pct2/100)*getHealingMult());
+      G.hp=Math.min(getMaxHp(),G.hp+h);addLog(`✨ Healed ${h} HP`,'heal');
+    } else if(move.type==='buff'){
+      // Buff moves apply immediately
+      if(move.effect==='enrage'){let ex=G.buffs.findIndex(b=>b.id==='enrage');if(ex>=0)G.buffs[ex].turns=3;else G.buffs.push({id:'enrage',name:'Enrage',turns:3});addLog('😡 Enrage! +35% dmg, +20% dmg taken for 3 turns.','buff');}
+      if(move.effect==='order_up'){let ex=G.buffs.findIndex(b=>b.id==='order_up');if(ex>=0)G.buffs[ex].turns=3;else G.buffs.push({id:'order_up',name:'Order Up',turns:3});addLog('🛡️ Order Up! +15% dmg & defense for 3 turns.','buff');}
+      if(move.effect==='mana_overflow'){let ex=G.buffs.findIndex(b=>b.id==='mana_overflow');if(ex>=0)G.buffs[ex].turns=3;else G.buffs.push({id:'mana_overflow',name:'Mana Overflow',turns:3});addLog('💜 Mana Overflow! +50% atk for 3 turns.','buff');}
+      if(move.effect==='holy_gift'){let h=Math.floor(getMaxHp()*0.05*getHealingMult());G.hp=Math.min(getMaxHp(),G.hp+h);let ex=G.buffs.findIndex(b=>b.id==='holy_gift_dr');if(ex>=0)G.buffs[ex].turns=3;else G.buffs.push({id:'holy_gift_dr',name:'Dmg Reduction',turns:3});addLog(`✨ Holy Gift heals ${h} HP and grants 10% dmg reduction (3 turns)!`,'heal');}
+    } else if(move.type==='debuff'){
+      boss.statuses=boss.statuses||[];boss.statuses.push({type:'poison',turns:3});addLog('☠️ Boss poisoned!','buff');
+    }
+
+    // Player status tick AFTER player acts
+    let pl=applyStatusDamage(null);pl.forEach(l=>addLog(l.text,l.cls));
+    renderTopBar();
+    if(G.hp<=0){renderBossFight();setTimeout(()=>playerDied(),300);return;}
+
+    if(boss.hp<=0){cs.animating=false;bossVictory();return;}
+
+    // Transition to boss turn
+    cs.playerTurn=false;
+    renderBossFight();
+    setTimeout(()=>doBossTurn(),500);
+  };
+
+  // Animate hit on boss card
+  dispatchMoveVFX(move.id, 'boss-card', 'player-combat-card');
+  let bossCard=document.getElementById('boss-card');
+  if(bossCard&&move.type==='atk'){
+    // Player lunges first
+    let pCard=document.getElementById('player-combat-card');
+    if(pCard){pCard.classList.remove('anim-attack');void pCard.offsetWidth;pCard.classList.add('anim-attack');setTimeout(()=>pCard.classList.remove('anim-attack'),420);}
+    setTimeout(()=>{
+      bossCard.classList.remove('anim-hit');void bossCard.offsetWidth;bossCard.classList.add('anim-hit');
+      setTimeout(()=>{bossCard.classList.remove('anim-hit');doAction();},450);
+    },150);
+  } else {
+    setTimeout(doAction,300);
+  }
+}
+
+function doBossTurn(){
+  let cs=combatState;
+  let boss=cs.boss;
+  tickBuff();
+  tickCooldowns();
+
+  // Boss status tick
+  let sl=applyStatusDamage([boss]);sl.forEach(l=>addLog(l.text,l.cls));
+  if(boss.hp<=0){cs.animating=false;bossVictory();return;}
+
+  // Boss attacks
+  let dmg=boss.dmg;
+  let drMult=1;
+  if(G.buffs.find(b=>b.id==='holy_gift_dr')) drMult*=0.9;
+  if(G.buffs.find(b=>b.id==='order_up')) drMult*=0.85;
+  dmg=Math.floor(dmg*drMult);
+  G.hp=Math.max(0,G.hp-dmg);
+  addLog(`${boss.icon} ${boss.name} attacks for ${dmg}!`,'enemy');
+  // Boss lunge animation then player hit
+  let bossArena=document.getElementById('boss-card');
+  if(bossArena){bossArena.classList.remove('anim-enemy-attack');void bossArena.offsetWidth;bossArena.classList.add('anim-enemy-attack');setTimeout(()=>bossArena.classList.remove('anim-enemy-attack'),440);}
+  setTimeout(()=>animatePlayerHit(null),170);
+  renderTopBar();
+
+  if(G.hp<=0){cs.animating=false;renderBossFight();setTimeout(()=>playerDied(),300);return;}
+
+  setTimeout(()=>{
+    cs.selectedMove=null;cs.turn++;
+    cs.playerTurn=true;
+    cs.animating=false;
+    renderBossFight();
+  },400);
+}
+
+function bossVictory(){
+  // Miniboss (Knight Captain at stage 5 or 10)
+  if(G.miniboss){
+    G.miniboss=false;
+    addLog('⚔️ Knight Captain defeated! You press onward...','death');
+    G.combatLog=[];
+    resetCooldowns();
+    G.buffs=[];
+    G._restedThisStage=false;
+    G.pendingStatPoints=(G.pendingStatPoints||0)+3;
+    G.wavesCompleted++;
+    G.phase='rest';
+    renderRest();
+    return;
+  }
+  if(G.prnceBoss){
+    let lootName=G.classKey==='warrior'||G.classKey==='knight'?"Champion's Sword":G.classKey==='mage'||G.classKey==='wizard'?"Wizard King Staff":"Druid's Grimoire";
+    if(G.classKey==='warrior'||G.classKey==='knight') G.weapon={id:'champions_sword',name:"Champion's Sword",dmgBonus:2,dmgPct:7.5};
+    if(G.classKey==='mage'||G.classKey==='wizard') G.weapon={id:'wizard_staff',name:"Wizard King Staff",dmgBonus:3,dmgPct:7.5};
+    if(G.classKey==='priest'||G.classKey==='druid') G.weapon={id:'druids_grimoire',name:"Druid's Grimoire",dmgBonus:2,dmgPct:0,healBonus:7.5};
+    addLog(`👑 You defeated the Prince! Obtained: ${lootName}!`,'death');
+    G.prnceBoss=false;
+    G.combatLog=[];
+    resetCooldowns();
+    G.buffs=[];
+    G._restedThisStage=false;
+    G.phase='rest';
+    renderRest();
+    return;
+  }
+  // True final boss — King slain!
+  showScreen('victory');
+  let maxHp=getMaxHp();
+  document.getElementById('victory-stats').innerHTML=`
+    <div class="panel-title">Run Summary</div>
+    <div class="stat-row"><span>Class</span><span class="gold-text">${getClassTag()}</span></div>
+    <div class="stat-row"><span>Final HP</span><span>${G.hp}/${maxHp}</span></div>
+    <div class="stat-row"><span>Gold Collected</span><span class="gold-text">🪙 ${G.gold}</span></div>
+    <div class="stat-row"><span>Waves Completed</span><span>${G.wavesCompleted}</span></div>
+    <div class="stat-row"><span>Weapon</span><span>${G.weapon.name}</span></div>
+  `;
+}
+
+function resetGame(){
+  G={};selectedClass=null;combatState=null;
+  resetUnitSelection();
+  showScreen('title-screen');
+  document.getElementById('class-cards').innerHTML='';
+  document.getElementById('confirm-class-btn').disabled=true;
+  renderClassSelect();
+}
+
+// ==================== HARD QUESTION CHALLENGE ====================
+function openHardQuestion(){
+  document.getElementById('hard-question-modal').classList.add('show');
+  // Reset inputs and statuses
+  ['a','b','c','d'].forEach(p => {
+    document.getElementById('hq-answer-'+p).value = '';
+    document.getElementById('hq-answer-'+p).className = 'hq-input';
+    document.getElementById('hq-status-'+p).textContent = '';
+  });
+  document.getElementById('hq-result').innerHTML = '';
+}
+
+function closeHardQuestion(){
+  document.getElementById('hard-question-modal').classList.remove('show');
+}
+
+function submitHardQuestion(){
+  const answers = {
+    a: 67.51,
+    b: 98.79,
+    c: 5.04,
+    d: 1.998
+  };
+  const tolerances = {
+    a: 0.01,
+    b: 0.01,
+    c: 0.01,
+    d: 0.001
+  };
+  
+  let allCorrect = true;
+  
+  ['a','b','c','d'].forEach(p => {
+    let input = document.getElementById('hq-answer-'+p);
+    let status = document.getElementById('hq-status-'+p);
+    let userVal = parseFloat(input.value.trim());
+    let correctVal = answers[p];
+    let tol = tolerances[p];
+    
+    if(isNaN(userVal)){
+      input.className = 'hq-input wrong';
+      status.textContent = '❌';
+      allCorrect = false;
+    } else if(Math.abs(userVal - correctVal) <= tol){
+      input.className = 'hq-input correct';
+      status.textContent = '✅';
+    } else {
+      input.className = 'hq-input wrong';
+      status.textContent = '❌';
+      allCorrect = false;
+    }
+  });
+  
+  let resultDiv = document.getElementById('hq-result');
+  
+  if(allCorrect){
+    // Award rewards
+    G.gold += 50;
+    G.baseHp = (G.baseHp || 30) + 10;
+    G.hp = Math.min(G.hp + 10, getMaxHp());
+    G.pendingStatPoints = (G.pendingStatPoints || 0) + 5;
+    G.hardQuestionCompleted = true;
+    
+    resultDiv.innerHTML = `
+      <div style="color:#88ff88;font-size:18px;margin-bottom:10px">🎉 ALL CORRECT! 🎉</div>
+      <div style="color:var(--gold)">You received: <strong>+50 Gold</strong>, <strong>+10 Base HP</strong>, <strong>+5 Stat Points</strong>!</div>
+    `;
+    
+    // Close modal after delay and refresh
+    setTimeout(() => {
+      closeHardQuestion();
+      renderTopBar();
+      renderEventSelect();
+    }, 2500);
+  } else {
+    resultDiv.innerHTML = `<div style="color:#ff8888">Some answers are incorrect. Check your work and try again!</div>`;
+  }
+}
+
+// ==================== INIT ====================
+renderClassSelect();
+showScreen('title-screen');
+</script>
+</body>
+</html>
